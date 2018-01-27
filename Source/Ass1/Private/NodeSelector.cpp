@@ -9,8 +9,8 @@ NodeSelector::NodeSelector()
 	YBound = 300.f;
 	PathSize = 3;
 	NumNodes = 100;
-	GoalRadius = 10;
-	nodes = TArray<Node>();
+	GoalRadius = 0.1f;
+	nodes = TArray<Node*>();
 	StepSize = 10;
 }
 
@@ -37,36 +37,45 @@ FVector NodeSelector::CalculatePoint(const FVector &p1,const FVector &p2) {
 }
 
 void NodeSelector::rrt(FVector EndPosition, FVector StartPosition) {
-	nodes.Reset(nodes.Num());
+	nodes.Empty();
 	//Create startnode
-	nodes.Add(Node(StartPosition));
+	Node* StartNode = new Node(StartPosition);
+	nodes.Add(StartNode);
 	int count = 0;
 	bool foundNext = false;
 	float x = 0;
 	float y = 0;
-	FVector rand = FVector(x, y, 0.f);
-	Node parent = nodes[0];
+	FVector rand = FVector(x, y, StartPosition.Z);
+	Node* parent = nodes[0];
 	while (count < NumNodes) {
 		foundNext = false;
 		while (!foundNext) {
 			rand.X = FMath::RandRange(-XBound, XBound);
 			rand.Y = FMath::RandRange(-YBound, YBound);
 			for (int i = 0; i < nodes.Num(); ++i) {
-				if (PointDistance(nodes[i].point, rand) <= PointDistance(parent.point,rand)) {
-					FVector NewPoint = CalculatePoint(nodes[i].point, rand);
-					//Check if collides, if no collision do this: No collisions yet
+				if (PointDistance(nodes[i]->point, rand) <= PointDistance(parent->point,rand)) {
+					FVector NewPoint = CalculatePoint(nodes[i]->point, rand);
 					parent = nodes[i];
 					foundNext = true;
 				}
 			}
 		}
-		FVector NewNode = CalculatePoint(parent.point, rand);
-		nodes.Add(Node(&parent, NewNode));
+		FVector NewNode = CalculatePoint(parent->point, rand);
+		NewNode.Z = 70.f;
+		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent.point.X, parent.point.Y);
+
+		nodes.Add(new Node(parent, NewNode));
+
+		if (PointDistance(NewNode, EndPosition)<GoalRadius) {
+			count = NumNodes;
+		}
 
 		
 		//Draw debug line
 		count++;
 	}
+	UE_LOG(LogTemp, Display, TEXT("%f"), nodes.Num());
+
 	
 }
 

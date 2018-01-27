@@ -123,16 +123,17 @@ void ADynamicPoint::DrawGraph() {
 	float y = 0;
 	NodeSelector.RandomPosition(x, y);
 	FVector goal = FVector(x, y, 0.f);
-	NodeSelector.rrt(location, goal);
+	NodeSelector.rrt(goal, location);
 	const UWorld * world = GetWorld();
 
 	if (NodeSelector.nodes.Num() != 0) {
 		FVector current;
 		FVector next;
-		for (int i = 0; i < NodeSelector.nodes.Num() - 1; ++i) {
-			Node parent = *NodeSelector.nodes[i].parent;
-			UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent.point.X, parent.point.Y);
-			//DrawDebugLine(world, NodeSelector.nodes[i].point, parent.point,FColor::Red, true);
+		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NodeSelector.nodes[0]->point.X, NodeSelector.nodes[0]->point.Y);
+		for (int i = 1; i < NodeSelector.nodes.Num(); ++i) {
+			Node* parent = NodeSelector.nodes[i]->parent;
+			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
+			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point,FColor::Red, true);
 		}
 	}
 }

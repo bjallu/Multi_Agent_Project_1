@@ -19,7 +19,7 @@ public:
 	float NumNodes;
 	float GoalRadius;
 	float StepSize;
-	TArray<Node> nodes;
+	TArray<Node*> nodes;
 
 	NodeSelector();
 	~NodeSelector();
