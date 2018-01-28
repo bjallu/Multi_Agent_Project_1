@@ -51,5 +51,6 @@ public:
 	virtual void GetPath();
 	virtual void DrawDebugLines();
 	virtual void DrawGraph();
+	float CalculateDistanceToGoal(const FVector);
 
 };

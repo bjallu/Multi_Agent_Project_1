@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "math.h"
 #include "Node.h"
+#include "Algo/Reverse.h"
 #include "DrawDebugHelpers.h"
 
 /**
@@ -23,6 +24,7 @@ public:
 
 	NodeSelector();
 	~NodeSelector();
+	void GetRrtPath(TArray<FVector>& vectors);
 	void RandomPosition(float&, float&);
 	void GetPath(TArray<FVector>&);
 	void rrt(FVector, FVector);

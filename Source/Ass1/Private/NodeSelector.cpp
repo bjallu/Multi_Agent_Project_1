@@ -8,16 +8,27 @@ NodeSelector::NodeSelector()
 	XBound = 300.f;
 	YBound = 300.f;
 	PathSize = 3;
-	NumNodes = 100;
+	NumNodes = 200;
 	GoalRadius = 0.1f;
 	nodes = TArray<Node*>();
-	StepSize = 10;
+	StepSize = 20;
 }
 
 NodeSelector::~NodeSelector()
 {
 }
 
+//run rrt first to create the nodes
+void NodeSelector::GetRrtPath(TArray<FVector>& vectors) {
+	//nodes[0] is startposition so shouldnt include it
+	Node* CurrentNode = nodes[nodes.Num() - 1];
+	while (CurrentNode->point != nodes[0]->point) {
+		CurrentNode->point.Z = 0;
+		vectors.Add(CurrentNode->point);
+		CurrentNode = CurrentNode->parent;
+	}
+	Algo::Reverse(vectors);
+}
 
 void NodeSelector::RandomPosition(float& x, float& y) {
 	x = FMath::RandRange(-XBound, XBound);
@@ -67,6 +78,7 @@ void NodeSelector::rrt(FVector EndPosition, FVector StartPosition) {
 		nodes.Add(new Node(parent, NewNode));
 
 		if (PointDistance(NewNode, EndPosition)<GoalRadius) {
+			nodes.Add(new Node(parent, EndPosition));
 			count = NumNodes;
 		}
 
@@ -74,7 +86,7 @@ void NodeSelector::rrt(FVector EndPosition, FVector StartPosition) {
 		//Draw debug line
 		count++;
 	}
-	UE_LOG(LogTemp, Display, TEXT("%f"), nodes.Num());
+	UE_LOG(LogTemp, Display, TEXT("%d"), nodes.Num());
 
 	
 }

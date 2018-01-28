@@ -47,5 +47,6 @@ public:
 	virtual void MoveToPosition(float x, float y);
 	virtual void GetPath();
 	virtual void DrawDebugLines();
+	virtual void DrawGraph();
 
 };

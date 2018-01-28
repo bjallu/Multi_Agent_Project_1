@@ -59,6 +59,35 @@ void AKinematicPoint::BeginPlay()
 
 }
 
+void AKinematicPoint::DrawGraph() {
+	FVector location = GetActorLocation();
+	location.Z = 0;
+	float x = 0;
+	float y = 0;
+	NodeSelector.RandomPosition(x, y);
+	FVector goal = FVector(x, y, 0.f);
+	NodeSelector.rrt(goal, location);
+	const UWorld * world = GetWorld();
+	//Draw that shit
+	if (NodeSelector.nodes.Num() != 0) {
+		FVector current;
+		FVector next;
+		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NodeSelector.nodes[0]->point.X, NodeSelector.nodes[0]->point.Y);
+		for (int i = 1; i < NodeSelector.nodes.Num(); ++i) {
+			Node* parent = NodeSelector.nodes[i]->parent;
+			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
+			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point, FColor::Red, true);
+		}
+		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 5.f, 26, FColor::Blue, true);
+	}
+	//Move that shit
+	NodeSelector.GetRrtPath(path);
+	HasGoalPosition = true;
+	DrawDebugLines();
+
+}
+
+
 // Called every frame
 void AKinematicPoint::Tick(float DeltaTime)
 {
@@ -69,6 +98,7 @@ void AKinematicPoint::Tick(float DeltaTime)
 		MoveToPosition(path[0].X, path[0].Y);
 		FVector XYLoc = GetActorLocation();
 		XYLoc.Z = 0.f;
+		//path[0].Z = 0.f;
 		//UE_LOG(LogTemp, Display, TEXT("Distance To Goal: %f"), *(XYLoc - GoalPosition).SizeSquared());
 		//Check if GoalPosition is reached
 		if ((XYLoc - path[0]).SizeSquared() <= 1.f) {
@@ -112,6 +142,7 @@ void AKinematicPoint::SetupPlayerInputComponent(UInputComponent* InputComponent)
 	InputComponent->BindAction("RandomDirection", IE_Pressed, this, &AKinematicPoint::RandomTurn);
 	InputComponent->BindAction("RandomPosition", IE_Pressed, this, &AKinematicPoint::RandomPosition);
 	InputComponent->BindAction("RandomPath", IE_Pressed, this, &AKinematicPoint::GetPath);
+	InputComponent->BindAction("DrawGraph", IE_Pressed, this, &AKinematicPoint::DrawGraph);
 
 
 }

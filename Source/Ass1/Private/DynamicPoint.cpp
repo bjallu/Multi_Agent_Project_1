@@ -58,6 +58,14 @@ void ADynamicPoint::BeginPlay()
 	
 }
 
+float ADynamicPoint::CalculateDistanceToGoal(const FVector XYLoc) {
+	float distance = sqrt(pow(XYLoc.X - path[0].X, 2) + pow(XYLoc.Y - path[0].Y, 2));
+	for (int i = 0; i < path.Num()-1; ++i) {
+		distance += sqrt(pow(path[i].X - path[i+1].X, 2) + pow(path[i].Y - path[i+1].Y, 2));
+	}
+	return distance;
+}
+
 // Called every frame
 void ADynamicPoint::Tick(float DeltaTime)
 {
@@ -68,19 +76,25 @@ void ADynamicPoint::Tick(float DeltaTime)
 		MoveToPosition(path[0].X, path[0].Y);
 		FVector XYLoc = GetActorLocation();
 		XYLoc.Z = 0.f;
+		path[0].Z = 0.f;
 		float distanceToStop = pow(MovementComponent->Velocity.Size(),2) / (2 * MovementComponent->Acceleration*DeltaTime);
-		float distancetogoal = sqrt(pow(XYLoc.X - path[0].X, 2) + pow(XYLoc.Y - path[0].Y, 2));
+		float distancetogoal = CalculateDistanceToGoal(XYLoc);
+		float distanceToNext = sqrt(pow(XYLoc.X - path[0].X, 2) + pow(XYLoc.Y - path[0].Y, 2));
 		UE_LOG(LogTemp, Display, TEXT("Distance left: %f DistanceToStop: %f"), distancetogoal, distanceToStop);
+		//Time to start slowing down
 		if (distancetogoal <= distanceToStop) {
-				// goal reached, check if path is not empty
-				if (distancetogoal < 0.1f) {
-					path.RemoveAt(0);
-					if (path.Num() == 0) {
-						HasGoalPosition = false;
-						FlushPersistentDebugLines(GetWorld());
-					}
-			}
+
 		}
+		// goal reached, check if path is not empty
+		else if (distanceToNext < 1.f) {
+			path.RemoveAt(0);
+			if (path.Num() == 0) {
+				HasGoalPosition = false;
+				FlushPersistentDebugLines(GetWorld());
+			}
+		}	
+		
+		
 		//Its not time to stop, keep moving forward
 		else
 			MovementComponent->AddInputVector(GetActorForwardVector());
@@ -135,7 +149,12 @@ void ADynamicPoint::DrawGraph() {
 			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
 			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point,FColor::Red, true);
 		}
+		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 5.f, 26, FColor::Blue, true);
 	}
+	//Move that shit
+	NodeSelector.GetRrtPath(path);
+	HasGoalPosition = true;
+	DrawDebugLines();
 }
 
 UPawnMovementComponent* ADynamicPoint::GetMovementComponent() const
