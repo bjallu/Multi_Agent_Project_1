@@ -5,3 +5,5 @@
 *.sln
 *.sdf
 *.suo
+/Content
+*.vs
