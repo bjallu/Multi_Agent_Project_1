@@ -17,7 +17,7 @@ ADynamicPoint::ADynamicPoint()
 	PrimaryActorTick.bCanEverTick = true;
 	USphereComponent* SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RootComponent"));
 	RootComponent = SphereComponent;
-	SphereComponent->InitSphereRadius(40.0f);
+	SphereComponent->InitSphereRadius(1.0f);
 	SphereComponent->SetCollisionProfileName(TEXT("Pawn"));
 	//SphereComponent->SetSimulatePhysics(true);
 
@@ -27,14 +27,14 @@ ADynamicPoint::ADynamicPoint()
 	if (SphereVisualAsset.Succeeded())
 	{
 		SphereVisual->SetStaticMesh(SphereVisualAsset.Object);
-		SphereVisual->SetRelativeLocation(FVector(0.0f, 0.0f, -40.0f));
-		SphereVisual->SetWorldScale3D(FVector(0.8f));
+		SphereVisual->SetRelativeLocation(FVector(0.0f, 0.0f, -40.f));
+		SphereVisual->SetWorldScale3D(FVector(1.f));
 	}
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraAttachmentArm"));
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->RelativeRotation = FRotator(-45.f, 0.f, 0.f);
-	SpringArm->TargetArmLength = 400.0f;
+	SpringArm->TargetArmLength = 400.f;
 	SpringArm->bEnableCameraLag = true;
 	SpringArm->bInheritYaw = 0;
 	SpringArm->CameraLagSpeed = 3.0f;
@@ -80,7 +80,7 @@ void ADynamicPoint::Tick(float DeltaTime)
 		float distanceToStop = pow(MovementComponent->Velocity.Size(),2) / (2 * MovementComponent->Acceleration*DeltaTime);
 		float distancetogoal = CalculateDistanceToGoal(XYLoc);
 		float distanceToNext = sqrt(pow(XYLoc.X - path[0].X, 2) + pow(XYLoc.Y - path[0].Y, 2));
-		UE_LOG(LogTemp, Display, TEXT("Distance left: %f DistanceToStop: %f"), distancetogoal, distanceToStop);
+		//UE_LOG(LogTemp, Display, TEXT("Distance left: %f DistanceToStop: %f"), distancetogoal, distanceToStop);
 		//Time to start slowing down
 		if (distancetogoal <= distanceToStop) {
 
@@ -131,30 +131,40 @@ void ADynamicPoint::SetupPlayerInputComponent(UInputComponent* InputComponent)
 }
 
 void ADynamicPoint::DrawGraph() {
+	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
 	FVector location = GetActorLocation();
 	location.Z = 0;
-	float x = 0;
-	float y = 0;
-	NodeSelector.RandomPosition(x, y);
-	FVector goal = FVector(x, y, 0.f);
-	NodeSelector.rrt(goal, location);
-	const UWorld * world = GetWorld();
+	float x = 10;
+	float y = 15;
+	//NodeSelector.RandomPosition(x, y);
 
+	FVector goal = FVector(x, y, 0.f);
+	//NodeSelector.rrt(goal, location);
+	UE_LOG(LogTemp,Display,TEXT("%f,%f"),GetActorLocation().X,GetActorLocation().Y)
+	NodeSelector.differentialRrt(goal, location, PI);
+	const UWorld * world = GetWorld();
+	
 	if (NodeSelector.nodes.Num() != 0) {
 		FVector current;
 		FVector next;
 		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NodeSelector.nodes[0]->point.X, NodeSelector.nodes[0]->point.Y);
+		
 		for (int i = 1; i < NodeSelector.nodes.Num(); ++i) {
 			Node* parent = NodeSelector.nodes[i]->parent;
 			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
 			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point,FColor::Red, true);
 		}
 		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 5.f, 26, FColor::Blue, true);
+		
+		DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Green, true);
 	}
 	//Move that shit
+	
 	NodeSelector.GetRrtPath(path);
 	HasGoalPosition = true;
 	DrawDebugLines();
+	
+	
 }
 
 UPawnMovementComponent* ADynamicPoint::GetMovementComponent() const

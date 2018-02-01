@@ -16,6 +16,12 @@ Node::Node(const Node& copied) {
 	this->point = copied.point;
 }
 
+Node::Node(const Node& copied, FVector location, float orientation) {
+	this->parent = copied.parent;
+	this->point = location;
+	this->orientation = orientation;
+}
+
 Node::Node(Node node, FVector point) {
 	this->parent = &node;
 	this->point = point;
@@ -23,6 +29,17 @@ Node::Node(Node node, FVector point) {
 
 Node::Node(FVector location) {
 	this->point = location;
+}
+
+Node::Node(FVector location, float orientation) {
+	this->point = location;
+	this->orientation = orientation;
+}
+
+Node::Node(Node* parent, FVector location, float orientation) {
+	this->parent = parent;
+	this->point = location;
+	this->orientation = orientation;
 }
 
 Node::~Node()

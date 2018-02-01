@@ -21,6 +21,11 @@ public:
 	float GoalRadius;
 	float StepSize;
 	TArray<Node*> nodes;
+	float TimeStep;
+	float Velocity;
+	float VehicleLength;
+	float MaxTurnSpeed;
+	FVector GoalVelocity;
 
 	NodeSelector();
 	~NodeSelector();
@@ -30,5 +35,10 @@ public:
 	void rrt(FVector, FVector);
 	FVector CalculatePoint(const FVector&, const FVector&);
 	float PointDistance(const FVector&, const FVector&);
+	void differentialRrt(const FVector, const FVector, float);
+	Node* CalculateDifferentialPoint(const Node& , const FVector&);
+	float DifferentialDriveDistance(const Node&, const FVector&);
+	float GetGoalOrientation(const FVector &, const FVector&);
+
 
 };
