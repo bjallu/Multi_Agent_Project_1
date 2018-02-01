@@ -39,6 +39,7 @@ public:
 	Node* CalculateDifferentialPoint(const Node& , const FVector&);
 	float DifferentialDriveDistance(const Node&, const FVector&);
 	float GetGoalOrientation(const FVector &, const FVector&);
+	bool CollisionCheck(const FVector&, Obstacle);
 
 
 };

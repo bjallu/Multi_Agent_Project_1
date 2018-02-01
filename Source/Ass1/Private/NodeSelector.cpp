@@ -65,6 +65,18 @@ float NodeSelector::DifferentialDriveDistance(const Node& n1, const FVector&n2) 
 	return turningTime + (distance / Velocity);
 }
 
+bool NodeSelector::CollisionCheck(const FVector& pointToCheck, const Obstacle obstacle) { //Add obstacle class
+	int i, j, c = 0;
+	for (i = 0, j = obstacle.N - 1; i < obstacle.N; j = i++) {
+		if (((obstacle.points[1][i]>pointToCheck.Y) != (obstacle.points[1][j]>pointToCheck.Y)) &&
+			(pointToCheck.X < (obstacle[0][j] - obstacle[0][i]) * (pointToCheck.Y - obstacle[1][i]) / (obstacle[1][j] - obstacle[1][i]) + obstacle[0][i]))
+			c = !c;
+	}
+	if (c == 1)
+		return true;
+	return false;
+}
+
 //Always turns and moves forward in maximum speed
 Node* NodeSelector::CalculateDifferentialPoint(const Node& n1, const FVector& n2) {
 	//Calculate angle to turn
