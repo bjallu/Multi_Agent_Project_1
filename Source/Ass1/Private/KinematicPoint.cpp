@@ -26,9 +26,9 @@ AKinematicPoint::AKinematicPoint()
 	{
 		SphereVisual->SetStaticMesh(SphereVisualAsset.Object);
 		SphereVisual->SetRelativeLocation(FVector(0.0f, 0.0f, -40.0f));
-		SphereVisual->SetWorldScale3D(FVector(0.8f));
+		SphereVisual->SetWorldScale3D(FVector(1.f));
 	}
-	/*
+	
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraAttachmentArm"));
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->RelativeRotation = FRotator(-45.f, 0.f, 0.f);
@@ -40,7 +40,7 @@ AKinematicPoint::AKinematicPoint()
 	// Create a camera and attach to our spring arm
 	UCameraComponent* Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("ActualCamera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-	*/
+	
 	// Take control of the default player
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
@@ -60,11 +60,13 @@ void AKinematicPoint::BeginPlay()
 }
 
 void AKinematicPoint::DrawGraph() {
+	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
 	FVector location = GetActorLocation();
 	location.Z = 0;
-	float x = 0;
-	float y = 0;
-	NodeSelector.RandomPosition(x, y);
+	float x = 10;
+	float y = 15;
+	//NodeSelector.RandomPosition(x, y);
+
 	FVector goal = FVector(x, y, 0.f);
 	NodeSelector.rrt(goal, location);
 	const UWorld * world = GetWorld();

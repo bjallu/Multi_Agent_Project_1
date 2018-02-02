@@ -53,8 +53,13 @@ FVector NodeSelector::CalculatePoint(const FVector &p1, const FVector &p2) {
 	if (PointDistance(p1, p2) <= Velocity * TimeStep) {
 		return p2; //p2 is the new random point, they are close to eachother
 	}
+	FVector dir = p2 - p1;
+	dir.Z = 0;
+	dir = dir / dir.Size(); //Normalize
+
 	float theta = atan2(p2.Y - p1.Y, p2.X - p1.X);
-	return FVector(p1.X + Velocity * TimeStep * cos(theta), p1.Y + Velocity * TimeStep * sin(theta), 0.f);
+
+	return FVector(p1.X + Velocity * TimeStep * dir.X, p1.Y + Velocity * TimeStep * dir.Y, 0.f);
 }
 
 bool NodeSelector::CollisionCheck(const FVector& pointToCheck, const Obstacle& obstacle) { //Add obstacle class
@@ -118,7 +123,7 @@ bool NodeSelector::CheckTrivialPath(const FVector& from, const FVector &to) {
 	if (PointDistance(from, to) <= Velocity * TimeStep) {
 		return true;
 	}
-	float theta = atan2(to.Y - from.Y, to.X - from.X);
+	float theta = atan2(to.Y - from.Y, to.X - from.X); // WRONG
 	FVector newNode = FVector(from.X + Velocity * TimeStep * cos(theta), from.Y + Velocity * TimeStep * sin(theta), 0.f);
 	while (!Collides(newNode)) {
 		if (PointDistance(newNode, to) <= Velocity * TimeStep) {
@@ -152,6 +157,12 @@ void NodeSelector::rrt(FVector EndPosition, FVector StartPosition) {
 		while (!foundNext) {
 			rand.X = FMath::RandRange(-XBound, XBound);
 			rand.Y = FMath::RandRange(-YBound, YBound);
+			if (count % 20 == 0) {
+				rand.X = EndPosition.X;
+				rand.Y = EndPosition.Y;
+
+				//UE_LOG(LogTemp, Display, TEXT("Sampling goal node"));
+			}
 			for (int i = 0; i < nodes.Num(); ++i) {
 				if (PointDistance(nodes[i]->point, rand) <= PointDistance(parent->point, rand)) {
 					FVector NewPoint = CalculatePoint(nodes[i]->point, rand);
@@ -162,7 +173,7 @@ void NodeSelector::rrt(FVector EndPosition, FVector StartPosition) {
 		}
 		FVector NewNode = CalculatePoint(parent->point, rand);
 		NewNode.Z = 70.f;
-		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent.point.X, parent.point.Y);
+		UE_LOG(LogTemp, Display, TEXT("%f, %f"), NewNode.X, NewNode.Y);
 
 		nodes.Add(new Node(parent, NewNode));
 
