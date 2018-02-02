@@ -7,6 +7,8 @@
 #include "GameFramework/Pawn.h"
 #include "KinematicPointMovementComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Obstacle.h"
+#include <vector>
 #include "KinematicPoint.generated.h"
 
 /**
@@ -16,6 +18,7 @@ UCLASS()
 class ASS1_API AKinematicPoint : public APawn
 {
 	GENERATED_BODY()
+
 public:
 	// Sets default values for this pawn's properties
 	class UKinematicPointMovementComponent* MovementComponent;
@@ -24,7 +27,19 @@ public:
 	FVector GoalPosition;
 	NodeSelector NodeSelector;
 	TArray<FVector> path;
+	FString m_jsonfileName;
 	AKinematicPoint();
+	double vehicle_L;
+	double vehicle_a_max;
+	double vehicle_dt;
+	double vehicle_omega_max;
+	double vehicle_t;
+	double vehicle_phi_max;
+	double vehicle_v_max;
+	FVector vel_goal;
+	FVector vel_start;
+	FVector pos_goal;
+	FVector pos_start;
 
 protected:
 	// Called when the game starts or when spawned
@@ -48,5 +63,8 @@ public:
 	virtual void GetPath();
 	virtual void DrawDebugLines();
 	virtual void DrawGraph();
-
+	virtual void DrawMap(std::vector<Obstacle>);
+	// Our json parser for the P1-P3 files
+	bool ParseJson(const FString& jsonfile);
+	bool ParseMap(const FString& jsonfile, const FString& jsonFileName, const FString& jsonData);
 };

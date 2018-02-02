@@ -10,15 +10,16 @@
 #include <vector>
 
 /**
- * 
- */
+*
+*/
 class ASS1_API Obstacle
 {
 public:
 	int N;
 	std::vector<std::vector<int>> points;
 
+	void AddObstaclePoint(float, float);
 	Obstacle();
 	~Obstacle();
-	
+
 };
