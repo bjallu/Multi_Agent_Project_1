@@ -141,7 +141,7 @@ void ADynamicPoint::DrawGraph() {
 	FVector goal = FVector(x, y, 0.f);
 	//NodeSelector.rrt(goal, location);
 	UE_LOG(LogTemp,Display,TEXT("%f,%f"),GetActorLocation().X,GetActorLocation().Y)
-	NodeSelector.differentialRrt(goal, location, PI/2);
+	NodeSelector.differentialRrt(goal, location, PI/2, PI/2);
 	const UWorld * world = GetWorld();
 	
 	if (NodeSelector.nodes.Num() != 0) {

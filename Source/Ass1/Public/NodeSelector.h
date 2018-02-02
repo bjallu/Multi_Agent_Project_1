@@ -37,13 +37,14 @@ public:
 	void rrt(FVector, FVector);
 	FVector CalculatePoint(const FVector&, const FVector&);
 	float PointDistance(const FVector&, const FVector&);
-	void differentialRrt(const FVector, const FVector, float);
+	void differentialRrt(const FVector, const FVector, float, float);
 	Node* CalculateDifferentialPoint(const Node& , const FVector&);
 	float DifferentialDriveDistance(const Node&, const FVector&);
 	float GetGoalOrientation(const FVector &, const FVector&);
 	bool CollisionCheck(const FVector&, const Obstacle&);
 	bool CheckTrivialPath(const FVector&, const FVector &);
 	bool Collides(const FVector&);
+	float GetMaxRotation(const float);
 
 
 };

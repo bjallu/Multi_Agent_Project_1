@@ -78,6 +78,10 @@ bool NodeSelector::Collides(const FVector& pointToCheck) {
 	return true;
 }
 
+float NodeSelector::GetMaxRotation(const float startOrientation) {
+	float angleDistance = TimeStep * MaxTurnSpeed;
+}
+
 float NodeSelector::DifferentialDriveDistance(const Node& n1, const FVector&n2) {
 	//Calculate angle to turn
 	float Vx = cos(n1.orientation);
@@ -85,9 +89,8 @@ float NodeSelector::DifferentialDriveDistance(const Node& n1, const FVector&n2) 
 	float dot = Vx * Vy + n2.X*n2.Y;
 	float det = Vx * n2.Y - n2.X*Vy;
 	float angleDistance = atan2(det, dot);
-	float turningTime = abs(angleDistance) / MaxTurnSpeed;		// FEL
+	float turningTime = abs(angleDistance) / MaxTurnSpeed;	
 	float distance = PointDistance(n1.point, n2);
-	//UE_LOG(LogTemp, Display, TEXT("Turningtime: %f"), turningTime);
 	return turningTime + (distance / Velocity);
 }
 
@@ -100,12 +103,9 @@ Node* NodeSelector::CalculateDifferentialPoint(const Node& n1, const FVector& n2
 	float det = Vx * n2.Y - n2.X*Vy;
 	float angleDistance = atan2(det, dot);
 	float newOrientation = atan2(n2.Y - n1.point.Y, n2.X - n1.point.X);				
-	UE_LOG(LogTemp, Display, TEXT("newOrientation: %f, angleDistance: %f"), newOrientation,   angleDistance);
 	float turningTime = abs(angleDistance) / MaxTurnSpeed;		// FEL
-	//UE_LOG(LogTemp, Display, TEXT("TURNING TIME: %f"), turningTime);
 	//Maybe add a time variable to nodes so that we can simulate the turning on a node of its own.
 	if (TimeStep - turningTime < 0) {
-		//UE_LOG(LogTemp, Display, TEXT(":( just rotatin"));
 		float orientation = n1.orientation + MaxTurnSpeed * TimeStep;
 		return new Node(n1, n1.point, orientation);
 	}
@@ -182,7 +182,7 @@ void NodeSelector::rrt(FVector EndPosition, FVector StartPosition) {
 	UE_LOG(LogTemp, Display, TEXT("%d"), nodes.Num());
 }
 
-void NodeSelector::differentialRrt(const FVector EndPosition, const FVector StartPosition, float startOrientation) {
+void NodeSelector::differentialRrt(const FVector EndPosition, const FVector StartPosition, float startOrientation, float EndOrientation) {
 	nodes.Empty();
 	//Create startnode
 	Node* StartNode = new Node(StartPosition, startOrientation);
@@ -222,6 +222,15 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 		if (PointDistance(NewNode->point, EndPosition)<GoalRadius) {
 			nodes.Add(new Node(parent, EndPosition, NewNode->orientation));
 			float goalOrientation = GetGoalOrientation(GoalVelocity, EndPosition);
+			Node* previous = NewNode;
+			//Rotate to the correct position
+			while (abs(goalOrientation - NewNode->orientation) < 0.1f) {
+				//Rotate into place
+				previous = NewNode;
+				NewNode = CalculateDifferentialPoint(*NewNode, EndPosition + (EndOrientation*TimeStep*0.1));
+				nodes.Add(new Node(previous, NewNode->point, NewNode->orientation));
+			}
+				
 			UE_LOG(LogTemp, Display, TEXT("FOUND GOAL"));
 			count = NumNodes;
 		}
