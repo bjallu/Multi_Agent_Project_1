@@ -26,7 +26,7 @@ public:
 	bool HasGoalPosition = false;
 	FVector GoalPosition;
 	NodeSelector NodeSelector;
-	TArray<FVector> path;
+	TArray<Node*> path;
 	FString m_jsonfileName;
 	AKinematicPoint();
 	double vehicle_L;
