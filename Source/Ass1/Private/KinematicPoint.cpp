@@ -103,8 +103,9 @@ void AKinematicPoint::Tick(float DeltaTime)
 		//path[0].Z = 0.f;
 		//UE_LOG(LogTemp, Display, TEXT("Distance To Goal: %f"), *(XYLoc - GoalPosition).SizeSquared());
 		//Check if GoalPosition is reached
-		if ((XYLoc - path[0]).SizeSquared() <= 1.f) {
+		if (NodeSelector.PointDistance(XYLoc, path[0]) <= 0.1f) {
 			// goal reached, check if path is not empty
+			UE_LOG(LogTemp, Display, TEXT("Reached node %f, %f"), XYLoc.X, XYLoc.Y);
 			path.RemoveAt(0);
 			if (path.Num() == 0) {
 				HasGoalPosition = false;

@@ -15,7 +15,7 @@ class ASS1_API UKinematicPointMovementComponent : public UPawnMovementComponent
 	GENERATED_BODY()
 	
 public:
-	float MaxVelocity = 150.f;
+	float MaxVelocity = 1.f;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
 	
 	

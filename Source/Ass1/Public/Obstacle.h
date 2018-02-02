@@ -18,6 +18,7 @@ public:
 	int N;
 	std::vector<std::vector<int>> points;
 
+	void AddObstaclePoint(float, float);
 	Obstacle();
 	~Obstacle();
 	

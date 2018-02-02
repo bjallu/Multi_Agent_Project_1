@@ -56,9 +56,7 @@ FVector NodeSelector::CalculatePoint(const FVector &p1, const FVector &p2) {
 	FVector dir = p2 - p1;
 	dir.Z = 0;
 	dir = dir / dir.Size(); //Normalize
-
 	float theta = atan2(p2.Y - p1.Y, p2.X - p1.X);
-
 	return FVector(p1.X + Velocity * TimeStep * dir.X, p1.Y + Velocity * TimeStep * dir.Y, 0.f);
 }
 

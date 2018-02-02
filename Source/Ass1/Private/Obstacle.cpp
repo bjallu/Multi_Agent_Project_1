@@ -13,3 +13,9 @@ Obstacle::~Obstacle()
 {
 }
 
+void Obstacle::AddObstaclePoint(float x, float y) {
+	std::vector<int> np(2);
+	np.push_back(x);
+	np.push_back(y);
+	this->points.push_back(np);
+}
