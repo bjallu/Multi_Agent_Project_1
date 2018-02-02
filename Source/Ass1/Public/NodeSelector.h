@@ -44,7 +44,7 @@ public:
 	bool CollisionCheck(const FVector&, const Obstacle&);
 	bool CheckTrivialPath(const FVector&, const FVector &);
 	bool Collides(const FVector&);
-	float GetMaxRotation(const float);
+
 
 
 };

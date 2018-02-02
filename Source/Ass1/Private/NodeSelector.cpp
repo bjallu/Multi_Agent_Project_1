@@ -78,10 +78,6 @@ bool NodeSelector::Collides(const FVector& pointToCheck) {
 	return true;
 }
 
-float NodeSelector::GetMaxRotation(const float startOrientation) {
-	float angleDistance = TimeStep * MaxTurnSpeed;
-}
-
 float NodeSelector::DifferentialDriveDistance(const Node& n1, const FVector&n2) {
 	//Calculate angle to turn
 	float Vx = cos(n1.orientation);
@@ -227,7 +223,7 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 			while (abs(goalOrientation - NewNode->orientation) < 0.1f) {
 				//Rotate into place
 				previous = NewNode;
-				NewNode = CalculateDifferentialPoint(*NewNode, EndPosition + (EndOrientation*TimeStep*0.1));
+				//Just rotate I cant think cuz its 03.40 so ill fix later
 				nodes.Add(new Node(previous, NewNode->point, NewNode->orientation));
 			}
 				
