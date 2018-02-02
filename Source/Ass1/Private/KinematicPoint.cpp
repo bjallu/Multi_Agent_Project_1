@@ -27,7 +27,7 @@ AKinematicPoint::AKinematicPoint()
 	SphereComponent->InitSphereRadius(40.0f);
 	SphereComponent->SetCollisionProfileName(TEXT("Pawn"));
 	//SphereComponent->SetSimulatePhysics(true);
-
+	/*
 	UStaticMeshComponent* SphereVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualRepresentation"));
 	SphereVisual->SetupAttachment(RootComponent);
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereVisualAsset(TEXT("/Game/StarterContent/Shapes/Shape_Trim.Shape_Trim"));
@@ -35,9 +35,9 @@ AKinematicPoint::AKinematicPoint()
 	{
 		SphereVisual->SetStaticMesh(SphereVisualAsset.Object);
 		SphereVisual->SetRelativeLocation(FVector(0.0f, 0.0f, -40.0f));
-		SphereVisual->SetWorldScale3D(FVector(0.8f));
+		SphereVisual->SetWorldScale3D(FVector(1.f));
 	}
-	/*
+	
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraAttachmentArm"));
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->RelativeRotation = FRotator(-45.f, 0.f, 0.f);
@@ -45,11 +45,11 @@ AKinematicPoint::AKinematicPoint()
 	SpringArm->bEnableCameraLag = true;
 	SpringArm->bInheritYaw = 0;
 	SpringArm->CameraLagSpeed = 3.0f;
-
+	*/
 	// Create a camera and attach to our spring arm
 	UCameraComponent* Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("ActualCamera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-	*/
+	
 	// Take control of the default player
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
@@ -86,11 +86,13 @@ void AKinematicPoint::BeginPlay()
 }
 
 void AKinematicPoint::DrawGraph() {
+	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
 	FVector location = GetActorLocation();
 	location.Z = 0;
-	float x = 0;
-	float y = 0;
-	NodeSelector.RandomPosition(x, y);
+	float x = 10;
+	float y = 15;
+	//NodeSelector.RandomPosition(x, y);
+
 	FVector goal = FVector(x, y, 0.f);
 	NodeSelector.rrt(goal, location);
 	const UWorld * world = GetWorld();
@@ -102,6 +104,14 @@ void AKinematicPoint::DrawGraph() {
 		for (int i = 1; i < NodeSelector.nodes.Num(); ++i) {
 			Node* parent = NodeSelector.nodes[i]->parent;
 			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
+			if (NodeSelector.nodes[i]->point.Z == 0.0) {
+				UE_LOG(LogTemp, Display, TEXT("FOUND 0 IN current"));
+				continue;
+			}
+			if (parent->point.Z == 0.0) {
+				UE_LOG(LogTemp, Display, TEXT("FOUND 0 IN parent"));
+				continue;
+			}
 			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point, FColor::Red, true);
 		}
 		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 5.f, 26, FColor::Blue, true);
@@ -425,14 +435,15 @@ void AKinematicPoint::Tick(float DeltaTime)
 
 	if (HasGoalPosition) {
 		//Calculate path
-		MoveToPosition(path[0].X, path[0].Y);
+		MoveToPosition(path[0]->point.X, path[0]->point.Y);
 		FVector XYLoc = GetActorLocation();
 		XYLoc.Z = 0.f;
 		//path[0].Z = 0.f;
 		//UE_LOG(LogTemp, Display, TEXT("Distance To Goal: %f"), *(XYLoc - GoalPosition).SizeSquared());
 		//Check if GoalPosition is reached
-		if ((XYLoc - path[0]).SizeSquared() <= 1.f) {
+		if (NodeSelector.PointDistance(XYLoc, path[0]->point) <= 0.1f) {
 			// goal reached, check if path is not empty
+			//UE_LOG(LogTemp, Display, TEXT("Reached node %f, %f"), XYLoc.X, XYLoc.Y);
 			path.RemoveAt(0);
 			if (path.Num() == 0) {
 				HasGoalPosition = false;
@@ -471,10 +482,10 @@ void AKinematicPoint::DrawDebugLines() {
 		const UWorld *world = GetWorld();
 		FVector current;
 		FVector next;
-		DrawDebugLine(world, GetActorLocation(), FVector(path[0].X, path[0].Y, GetActorLocation().Z), FColor::Emerald, true);
+		DrawDebugLine(world, GetActorLocation(), FVector(path[0]->point.X, path[0]->point.Y, GetActorLocation().Z), FColor::Emerald, true);
 		for (int i = 0; i < path.Num() - 1; ++i) {
-			current = FVector(path[i].X, path[i].Y, GetActorLocation().Z);
-			next = FVector(path[i + 1].X, path[i + 1].Y, GetActorLocation().Z);
+			current = FVector(path[i]->point.X, path[i]->point.Y, GetActorLocation().Z);
+			next = FVector(path[i + 1]->point.X, path[i + 1]->point.Y, GetActorLocation().Z);
 			DrawDebugLine(world, current, next, FColor::Emerald, true);
 		}
 	}
@@ -542,7 +553,7 @@ void AKinematicPoint::RandomPosition() {
 	float y;
 	this->NodeSelector.RandomPosition(x,y);
 	//UE_LOG(LogTemp,Display, TEXT("X: %f Y: %f"), x, y);
-	path.Add(FVector(x, y, 0.f));
+	path.Add(new Node(FVector(x, y, 0.f)));
 	HasGoalPosition = true;
 	DrawDebugLines();
 }
