@@ -112,13 +112,13 @@ void ADifferentialDrive::DrawGraph() {
 	float y = 15;							// Change to read from json
 	//NodeSelector.RandomPosition(x, y);
 	FVector goal = FVector(x, y, 70.f);
-	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5,0.0), FVector(0.9,-0.2,0.0));
+	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5,70.0), FVector(0.9,-0.2,70.0));
 
 	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
 		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
 	const UWorld * world = GetWorld();
 	//UE_LOG(LogTemp, Display, TEXT("GREEN NODE: %f,%f"), x, y);
-	DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Green, true);
+	//DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Green, true);
 
 	if (NodeSelector.nodes.Num() != 0) {
 		FVector current;

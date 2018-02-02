@@ -8,7 +8,7 @@ NodeSelector::NodeSelector()
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 3;
-	NumNodes = 2;
+	NumNodes = 1000;
 	GoalRadius = 1.f;
 	nodes = TArray<Node*>();
 	obstacles = TArray<Obstacle>();
@@ -60,7 +60,7 @@ FVector NodeSelector::CalculatePoint(const FVector &p1, const FVector &p2) {
 	return FVector(p1.X + Velocity * TimeStep * dir.X, p1.Y + Velocity * TimeStep * dir.Y, 0.f);
 }
 
-bool NodeSelector::CollisionCheck(const FVector& pointToCheck, const Obstacle& obstacle) { //Add obstacle class
+bool NodeSelector::CollisionCheck(const FVector& pointToCheck, const Obstacle& obstacle) {
 	int i, j, c = 0;
 	for (i = 0, j = obstacle.N - 1; i < obstacle.N; j = i++) {
 		if (((obstacle.points[1][i]>pointToCheck.Y) != (obstacle.points[1][j]>pointToCheck.Y)) &&
@@ -87,7 +87,8 @@ float NodeSelector::DifferentialDriveDistance(const Node& n1, const FVector&n2) 
 	float angleDistance = acos(GetCosAngle(n1.orientation, path));
 	float turningTime = angleDistance / MaxTurnSpeed;
 	float distance = PointDistance(n1.point, n2);
-	UE_LOG(LogTemp, Display, TEXT("Time to reach goal: %f"), turningTime + (distance / Velocity));
+	//UE_LOG(LogTemp, Display, TEXT("Node with orientation: %f, %f, has to turn %f rads to face target, time to reach is %f"), n1.orientation.X, n1.orientation.Y, angleDistance, turningTime + (distance / Velocity));
+
 	return turningTime + (distance / Velocity);
 }
 
@@ -105,29 +106,18 @@ float NodeSelector::GetCosAngle(const FVector& v1, const FVector& v2) {
 
 //Always turns and moves forward in maximum speed
 Node* NodeSelector::CalculateDifferentialPoint(const Node& n1, const FVector& n2) {
-	//Calculate angle to turn
-	/*
-	float Vx = cos(n1.orientation); //Directional vector of n1
-	float Vy = sin(n1.orientation);
-	FVector dir = n2 - n1.point;
-	float dot = Vx * Vy + dir.X*dir.Y; //Wrong, n2 is from 0,0 to n2. Direction vector from n1 to n2.
-	float det = Vx * dir.Y - dir.X*Vy;
-	float angleDistance = atan2(det, dot);
-	*/
 	FVector path = n2 - n1.point;
 	float angle = acos(GetCosAngle(n1.orientation, path));
-	
 	float orientation = acos(GetCosAngle(FVector(1,0,0), n1.orientation));
 	//UE_LOG(LogTemp, Display, TEXT("orientation: %f"), angle);
 	if (n1.orientation.Y < 0) 
 		orientation = -orientation;
 	if (angle > 0.00001) {
-		//UE_LOG(LogTemp, Display, TEXT("Doing stuff to orientatoin"))
 		FVector cross = FVector::CrossProduct(path, n1.orientation);
 		float partTurn = MaxTurnSpeed * TimeStep / angle;
 		if (partTurn > 1)
 			partTurn = 1;
-		if (cross.Z <= 0)
+		if (cross.Z > 0)
 			angle = -angle;
 		float turnAngle = angle * partTurn;
 		orientation = (turnAngle + orientation);
@@ -244,7 +234,7 @@ void NodeSelector::rrt(FVector EndPosition, FVector StartPosition) {
 		//Draw debug line
 		count++;
 	}
-	UE_LOG(LogTemp, Display, TEXT("%d"), nodes.Num());
+	UE_LOG(LogTemp, Display, TEXT("nr of nodes: %d"), nodes.Num());
 }
 
 void NodeSelector::differentialRrt(const FVector EndPosition, const FVector StartPosition, FVector startOrientation, FVector EndOrientation) {
@@ -264,7 +254,7 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 		while (!foundNext) {
 			rand.X = FMath::RandRange(-XBound, XBound);
 			rand.Y = FMath::RandRange(-YBound, YBound);
-			if (count % 1 == 0) {
+			if (count % 20 == 0) {
 				rand.X = EndPosition.X;
 				rand.Y = EndPosition.Y;
 				
@@ -314,7 +304,7 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 		count++;
 		//UE_LOG(LogTemp, Display, TEXT("%d"), count);
 	}
-	UE_LOG(LogTemp, Display, TEXT("%d"), nodes.Num());
+	UE_LOG(LogTemp, Display, TEXT("nr of nodes: %d"), nodes.Num());
 
 }
 
