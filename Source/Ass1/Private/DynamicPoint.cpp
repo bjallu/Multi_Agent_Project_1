@@ -30,7 +30,7 @@ ADynamicPoint::ADynamicPoint()
 		SphereVisual->SetRelativeLocation(FVector(0.0f, 0.0f, -40.f));
 		SphereVisual->SetWorldScale3D(FVector(1.f));
 	}
-
+	
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraAttachmentArm"));
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->RelativeRotation = FRotator(-45.f, 0.f, 0.f);
@@ -42,7 +42,7 @@ ADynamicPoint::ADynamicPoint()
 	// Create a camera and attach to our spring arm
 	UCameraComponent* Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("ActualCamera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-
+	
 	// Take control of the default player
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
@@ -122,7 +122,7 @@ void ADynamicPoint::SetupPlayerInputComponent(UInputComponent* InputComponent)
 
 	InputComponent->BindAxis("MoveForward", this, &ADynamicPoint::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ADynamicPoint::MoveRight);
-	InputComponent->BindAxis("Turn", this, &ADynamicPoint::Turn);
+	//InputComponent->BindAxis("Turn", this, &ADynamicPoint::Turn);
 	InputComponent->BindAction("RandomDirection",IE_Pressed, this, &ADynamicPoint::RandomTurn);
 	InputComponent->BindAction("RandomPosition", IE_Pressed, this, &ADynamicPoint::RandomPosition);
 	InputComponent->BindAction("RandomPath", IE_Pressed, this, &ADynamicPoint::GetPath);
@@ -141,7 +141,7 @@ void ADynamicPoint::DrawGraph() {
 	FVector goal = FVector(x, y, 0.f);
 	//NodeSelector.rrt(goal, location);
 	UE_LOG(LogTemp,Display,TEXT("%f,%f"),GetActorLocation().X,GetActorLocation().Y)
-	NodeSelector.differentialRrt(goal, location, PI);
+	NodeSelector.differentialRrt(goal, location, PI/2);
 	const UWorld * world = GetWorld();
 	
 	if (NodeSelector.nodes.Num() != 0) {

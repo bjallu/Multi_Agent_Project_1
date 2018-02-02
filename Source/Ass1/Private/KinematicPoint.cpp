@@ -28,7 +28,7 @@ AKinematicPoint::AKinematicPoint()
 		SphereVisual->SetRelativeLocation(FVector(0.0f, 0.0f, -40.0f));
 		SphereVisual->SetWorldScale3D(FVector(0.8f));
 	}
-
+	/*
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraAttachmentArm"));
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->RelativeRotation = FRotator(-45.f, 0.f, 0.f);
@@ -40,7 +40,7 @@ AKinematicPoint::AKinematicPoint()
 	// Create a camera and attach to our spring arm
 	UCameraComponent* Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("ActualCamera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-
+	*/
 	// Take control of the default player
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
@@ -138,7 +138,7 @@ void AKinematicPoint::SetupPlayerInputComponent(UInputComponent* InputComponent)
 
 	InputComponent->BindAxis("MoveForward", this, &AKinematicPoint::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &AKinematicPoint::MoveRight);
-	InputComponent->BindAxis("Turn", this, &AKinematicPoint::Turn);
+	//InputComponent->BindAxis("Turn", this, &AKinematicPoint::Turn);
 	InputComponent->BindAction("RandomDirection", IE_Pressed, this, &AKinematicPoint::RandomTurn);
 	InputComponent->BindAction("RandomPosition", IE_Pressed, this, &AKinematicPoint::RandomPosition);
 	InputComponent->BindAction("RandomPath", IE_Pressed, this, &AKinematicPoint::GetPath);

@@ -6,6 +6,7 @@
 #include "math.h"
 #include "Node.h"
 #include "Algo/Reverse.h"
+#include "Obstacle.h"
 #include "DrawDebugHelpers.h"
 
 /**
@@ -21,6 +22,7 @@ public:
 	float GoalRadius;
 	float StepSize;
 	TArray<Node*> nodes;
+	TArray<Obstacle> obstacles;
 	float TimeStep;
 	float Velocity;
 	float VehicleLength;
@@ -39,7 +41,9 @@ public:
 	Node* CalculateDifferentialPoint(const Node& , const FVector&);
 	float DifferentialDriveDistance(const Node&, const FVector&);
 	float GetGoalOrientation(const FVector &, const FVector&);
-	bool CollisionCheck(const FVector&, Obstacle);
+	bool CollisionCheck(const FVector&, const Obstacle&);
+	bool CheckTrivialPath(const FVector&, const FVector &);
+	bool Collides(const FVector&);
 
 
 };
