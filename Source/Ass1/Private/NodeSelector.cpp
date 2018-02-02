@@ -46,7 +46,7 @@ float NodeSelector::PointDistance(const FVector &p1, const FVector &p2) {
 }
 
 float NodeSelector::GetGoalOrientation(const FVector &goalVel, const FVector& coords) {
-	return atan2(goalVel.Y - coords.Y, goalVel.X - coords.X);
+	return atan2(goalVel.Y - coords.Y, goalVel.X - coords.X); // is wrong
 }
 
 FVector NodeSelector::CalculatePoint(const FVector &p1, const FVector &p2) {
@@ -98,11 +98,10 @@ Node* NodeSelector::CalculateDifferentialPoint(const Node& n1, const FVector& n2
 	float dot = Vx * Vy + n2.X*n2.Y;
 	float det = Vx * n2.Y - n2.X*Vy;
 	float angleDistance = atan2(det, dot);
-	float newOrientation = atan2(n2.Y - n1.point.Y, n2.X - n1.point.X);				
-	float turningTime = abs(angleDistance) / MaxTurnSpeed;		// FEL
+	float turningTime = abs(angleDistance) / MaxTurnSpeed;		
 	//Maybe add a time variable to nodes so that we can simulate the turning on a node of its own.
 	if (TimeStep - turningTime < 0) {
-		float orientation = n1.orientation + MaxTurnSpeed * TimeStep;
+		float orientation = n1.orientation + copysign(1.0,angleDistance)*MaxTurnSpeed * TimeStep; //might be wrong too...
 		return new Node(n1, n1.point, orientation);
 	}
 
@@ -217,17 +216,31 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 		nodes.Add(new Node(parent, NewNode->point, NewNode->orientation));
 		if (PointDistance(NewNode->point, EndPosition)<GoalRadius) {
 			nodes.Add(new Node(parent, EndPosition, NewNode->orientation));
-			float goalOrientation = GetGoalOrientation(GoalVelocity, EndPosition);
-			Node* previous = NewNode;
 			//Rotate to the correct position
-			while (abs(goalOrientation - NewNode->orientation) < 0.1f) {
+			float MaxTurnDistance = TimeStep * MaxTurnSpeed;
+			float Vx = cos(EndOrientation);
+			float Vy = sin(EndOrientation);
+			int timeswerotate = 0;
+			UE_LOG(LogTemp, Display, TEXT("MaxAngleTurn: %f"), MaxTurnDistance);
+			//UE_LOG(LogTemp, Display, TEXT("Endorientation: %f NewNode orientation: %f"), EndOrientation, NewNode->orientation);
+			while (!(abs(EndOrientation - nodes[nodes.Num()-1]->orientation) < 0.1f)) {
+				UE_LOG(LogTemp, Display, TEXT("Endorientation: %f NewNode orientation: %f"), EndOrientation, nodes[nodes.Num()-1]->orientation);
 				//Rotate into place
-				previous = NewNode;
-				//Just rotate I cant think cuz its 03.40 so ill fix later
-				nodes.Add(new Node(previous, NewNode->point, NewNode->orientation));
+				timeswerotate++;
+				float Gx = cos(nodes[nodes.Num() - 1]->orientation);
+				float Gy = sin(nodes[nodes.Num() - 1]->orientation);
+				float dot = Vx * Vy + Gx*Gy;
+				float det = Vx * Gy - Gx*Vy;
+				float angleDistance = atan2(det, dot);
+				//float angleDistance = EndOrientation - nodes[nodes.Num() - 1]->orientation;
+				UE_LOG(LogTemp, Display, TEXT("AngleDistance: %f"), angleDistance);
+				if (abs(angleDistance) <= MaxTurnDistance) {
+					nodes.Add(new Node(nodes[nodes.Num()-1], EndPosition, EndOrientation));
+					return;
+				}
+				nodes.Add(new Node(nodes[nodes.Num()-1], NewNode->point, nodes[nodes.Num() - 1]->orientation + copysign(1.0,-angleDistance)*MaxTurnDistance));
 			}
-				
-			UE_LOG(LogTemp, Display, TEXT("FOUND GOAL"));
+			UE_LOG(LogTemp, Display, TEXT("FOUND GOAL, rotated %d times"),timeswerotate);
 			count = NumNodes;
 		}
 		count++;
