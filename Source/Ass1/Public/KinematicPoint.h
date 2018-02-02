@@ -23,7 +23,7 @@ public:
 	bool HasGoalPosition = false;
 	FVector GoalPosition;
 	NodeSelector NodeSelector;
-	TArray<FVector> path;
+	TArray<Node*> path;
 	AKinematicPoint();
 
 protected:

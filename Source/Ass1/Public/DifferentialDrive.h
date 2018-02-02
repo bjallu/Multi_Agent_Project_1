@@ -1,21 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
+
 #include "CoreMinimal.h"
 #include "NodeSelector.h"
 #include "GameFramework/Pawn.h"
 #include "DynamicPointMovementComponent.h"
 #include "DrawDebugHelpers.h"
-
-#include "DynamicPoint.generated.h"
-
-
-/**
-*
-*/
+#include "Node.h"
+#include "DifferentialDrive.generated.h"
+/**/
 UCLASS()
-
-class ASS1_API ADynamicPoint : public APawn
+class ASS1_API ADifferentialDrive : public APawn
 {
 	GENERATED_BODY()
 
@@ -27,13 +23,13 @@ public:
 	FVector GoalPosition;
 	NodeSelector NodeSelector;
 	TArray<Node*> path;
-	ADynamicPoint();
+	ADifferentialDrive();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -52,5 +48,5 @@ public:
 	virtual void DrawDebugLines();
 	virtual void DrawGraph();
 	float CalculateDistanceToGoal(const FVector);
-
+	
 };

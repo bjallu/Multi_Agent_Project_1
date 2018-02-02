@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "DynamicPoint.h"
+#include "DifferentialDrive.h"
 #include "UnrealEngine.h"
 #include "Components/SphereComponent.h"
 #include "Camera/CameraComponent.h"
@@ -11,9 +11,9 @@
 
 
 // Sets default values
-ADynamicPoint::ADynamicPoint()
+ADifferentialDrive::ADifferentialDrive()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	USphereComponent* SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RootComponent"));
 	RootComponent = SphereComponent;
@@ -48,60 +48,34 @@ ADynamicPoint::ADynamicPoint()
 
 	MovementComponent = CreateDefaultSubobject<UDynamicPointMovementComponent>(TEXT("CustomMovementComponent"));
 	MovementComponent->UpdatedComponent = RootComponent;
-	
+
 }
 
 // Called when the game starts or when spawned
-void ADynamicPoint::BeginPlay()
+void ADifferentialDrive::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
-float ADynamicPoint::CalculateDistanceToGoal(const FVector XYLoc) {
+float ADifferentialDrive::CalculateDistanceToGoal(const FVector XYLoc) {
 	float distance = sqrt(pow(XYLoc.X - path[0]->point.X, 2) + pow(XYLoc.Y - path[0]->point.Y, 2));
-	for (int i = 0; i < path.Num()-1; ++i) {
-		distance += sqrt(pow(path[i]->point.X - path[i+1]->point.X, 2) + pow(path[i]->point.Y - path[i+1]->point.Y, 2));
+	for (int i = 0; i < path.Num() - 1; ++i) {
+		distance += sqrt(pow(path[i]->point.X - path[i + 1]->point.X, 2) + pow(path[i]->point.Y - path[i + 1]->point.Y, 2));
 	}
 	return distance;
 }
 
 // Called every frame
-void ADynamicPoint::Tick(float DeltaTime)
+void ADifferentialDrive::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 	if (HasGoalPosition) {
-		//MoveToPosition only rotates the actor
-		MoveToPosition(path[0]->point.X, path[0]->point.Y);
-		FVector XYLoc = GetActorLocation();
-		XYLoc.Z = 0.f;
-		path[0]->point.Z = 0.f;
-		float distanceToStop = pow(MovementComponent->Velocity.Size(),2) / (2 * MovementComponent->Acceleration*DeltaTime);
-		float distancetogoal = CalculateDistanceToGoal(XYLoc);
-		float distanceToNext = sqrt(pow(XYLoc.X - path[0]->point.X, 2) + pow(XYLoc.Y - path[0]->point.Y, 2));
-		//UE_LOG(LogTemp, Display, TEXT("Distance left: %f DistanceToStop: %f"), distancetogoal, distanceToStop);
-		//Time to start slowing down
-		if (distancetogoal <= distanceToStop) {
-
-		}
-		// goal reached, check if path is not empty
-		else if (distanceToNext < 1.f) {
-			path.RemoveAt(0);
-			if (path.Num() == 0) {
-				HasGoalPosition = false;
-				FlushPersistentDebugLines(GetWorld());
-			}
-		}	
-		
-		
-		//Its not time to stop, keep moving forward
-		else
-			MovementComponent->AddInputVector(GetActorForwardVector());
 	}
 }
 
-void ADynamicPoint::DrawDebugLines() {
+void ADifferentialDrive::DrawDebugLines() {
 	if (path.Num() != 0) {
 		const UWorld *world = GetWorld();
 		FVector current;
@@ -116,72 +90,83 @@ void ADynamicPoint::DrawDebugLines() {
 }
 
 // Called to bind functionality to input
-void ADynamicPoint::SetupPlayerInputComponent(UInputComponent* InputComponent)
+void ADifferentialDrive::SetupPlayerInputComponent(UInputComponent* InputComponent)
 {
 	//Super::SetupPlayerInputComponent(InputComponent);
 
-	InputComponent->BindAxis("MoveForward", this, &ADynamicPoint::MoveForward);
-	InputComponent->BindAxis("MoveRight", this, &ADynamicPoint::MoveRight);
-	//InputComponent->BindAxis("Turn", this, &ADynamicPoint::Turn);
-	InputComponent->BindAction("RandomDirection",IE_Pressed, this, &ADynamicPoint::RandomTurn);
-	InputComponent->BindAction("RandomPosition", IE_Pressed, this, &ADynamicPoint::RandomPosition);
-	InputComponent->BindAction("RandomPath", IE_Pressed, this, &ADynamicPoint::GetPath);
-	InputComponent->BindAction("DrawGraph", IE_Pressed, this, &ADynamicPoint::DrawGraph);
+	InputComponent->BindAxis("MoveForward", this, &ADifferentialDrive::MoveForward);
+	InputComponent->BindAxis("MoveRight", this, &ADifferentialDrive::MoveRight);
+	//InputComponent->BindAxis("Turn", this, &ADifferentialDrive::Turn);
+	InputComponent->BindAction("RandomDirection", IE_Pressed, this, &ADifferentialDrive::RandomTurn);
+	InputComponent->BindAction("RandomPosition", IE_Pressed, this, &ADifferentialDrive::RandomPosition);
+	InputComponent->BindAction("RandomPath", IE_Pressed, this, &ADifferentialDrive::GetPath);
+	InputComponent->BindAction("DrawGraph", IE_Pressed, this, &ADifferentialDrive::DrawGraph);
 
 }
 
-void ADynamicPoint::DrawGraph() {
+void ADifferentialDrive::DrawGraph() {
 	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
 	FVector location = GetActorLocation();
 	location.Z = 0;
 	float x = 10;
 	float y = 15;							// Change to read from json
-	FVector goal = FVector(x, y, 0.f);
-	NodeSelector.rrt(goal, location);
-	UE_LOG(LogTemp,Display,TEXT("%f,%f"),GetActorLocation().X,GetActorLocation().Y)
-	//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
+	//NodeSelector.RandomPosition(x, y);
+	FVector goal = FVector(x, y, 70.f);
+	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5,0.0), FVector(0.9,-0.2,0.0));
+
+	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
+		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
 	const UWorld * world = GetWorld();
-	
+	//UE_LOG(LogTemp, Display, TEXT("GREEN NODE: %f,%f"), x, y);
+	DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Green, true);
+
 	if (NodeSelector.nodes.Num() != 0) {
 		FVector current;
 		FVector next;
 		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NodeSelector.nodes[0]->point.X, NodeSelector.nodes[0]->point.Y);
-		
+
 		for (int i = 1; i < NodeSelector.nodes.Num(); ++i) {
 			Node* parent = NodeSelector.nodes[i]->parent;
 			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
-			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point,FColor::Red, true);
+			if (NodeSelector.nodes[i]->point.Z == 0.0) {
+				//UE_LOG(LogTemp, Display, TEXT("FOUND 0 IN current"));
+				continue;
+			}
+			if (parent->point.Z == 0.0) {
+				//UE_LOG(LogTemp, Display, TEXT("FOUND 0 IN parent"));
+				continue;
+			}
+			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point, FColor::Red, true);
 		}
-		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 5.f, 26, FColor::Blue, true);
-		
-		DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Green, true);
+		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 0.1f, 26, FColor::Blue, true);
+
 	}
 	//Move that shit
-	
+
 	NodeSelector.GetRrtPath(path);
 	HasGoalPosition = true;
 	DrawDebugLines();
-	
-	
+
+
 }
 
-UPawnMovementComponent* ADynamicPoint::GetMovementComponent() const
+UPawnMovementComponent* ADifferentialDrive::GetMovementComponent() const
 {
 	return MovementComponent;
 }
 
-void ADynamicPoint::MoveForward(float AxisValue)
+void ADifferentialDrive::MoveForward(float AxisValue)
 {
 
 	if (MovementComponent && (MovementComponent->UpdatedComponent == RootComponent))
 	{
 
-		MovementComponent->AddInputVector(GetActorForwardVector() * AxisValue );
+		MovementComponent->AddInputVector(GetActorForwardVector() * AxisValue);
 	}
 
 }
 
-void ADynamicPoint::MoveRight(float AxisValue)
+void ADifferentialDrive::MoveRight(float AxisValue)
 {
 
 	if (MovementComponent && (MovementComponent->UpdatedComponent == RootComponent))
@@ -191,23 +176,23 @@ void ADynamicPoint::MoveRight(float AxisValue)
 		SetActorRotation(NewRotation);
 	}
 
-	
+
 }
 
-void ADynamicPoint::Turn(float AxisValue)
+void ADifferentialDrive::Turn(float AxisValue)
 {
 	FRotator NewRotation = SpringArm->RelativeRotation;
 	NewRotation.Yaw += AxisValue;
 	SpringArm->SetRelativeRotation(NewRotation);
 }
 
-void ADynamicPoint::RandomTurn() {
+void ADifferentialDrive::RandomTurn() {
 	FRotator NewRotation = GetActorRotation();
 	NewRotation.Yaw += rand();
 	SetActorRotation(NewRotation);
 }
 
-void ADynamicPoint::RandomPosition() {
+void ADifferentialDrive::RandomPosition() {
 	float x;
 	float y;
 	this->NodeSelector.RandomPosition(x, y);
@@ -217,14 +202,14 @@ void ADynamicPoint::RandomPosition() {
 	DrawDebugLines();
 }
 
-void ADynamicPoint::GetPath() {
+void ADifferentialDrive::GetPath() {
 	NodeSelector.GetPath(path);
 	HasGoalPosition = true;
 	DrawDebugLines();
 }
 
 
-void ADynamicPoint::MoveToPosition(float x, float y) {
+void ADifferentialDrive::MoveToPosition(float x, float y) {
 	//Calculate rotation
 	FVector MoveTo = FVector(x, y, 0);
 	FVector Forward = MoveTo - GetActorLocation();
