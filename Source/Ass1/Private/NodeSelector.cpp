@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NodeSelector.h"
+#include "MapFunctions.h"
 
 NodeSelector::NodeSelector()
 {
@@ -178,7 +179,7 @@ Node* NodeSelector::CalculateDifferentialPoint(const Node& n1, const FVector& n2
 	return new Node(n1, newPosition, newOrientation);
 }
 
-void NodeSelector::differentialRrt(const FVector EndPosition, const FVector StartPosition, FVector startOrientation, FVector EndOrientation) {
+void NodeSelector::differentialRrt(const FVector EndPosition, const FVector StartPosition, FVector startOrientation, FVector EndOrientation, MapFunctions map) {
 	nodes.Empty();
 	//Create startnode
 	Node* StartNode = new Node(StartPosition, startOrientation);
@@ -195,6 +196,8 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 		while (!foundNext) {
 			rand.X = FMath::RandRange(-XBound, XBound);
 			rand.Y = FMath::RandRange(-YBound, YBound);
+			// First check if its in bounding box if it is continue
+			if (map.OutsideBoundingBoxCheck(rand)) continue;
 			if (count % 20 == 0) {
 				rand.X = EndPosition.X;
 				rand.Y = EndPosition.Y;
@@ -206,6 +209,10 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 				float returned2 = DifferentialDriveDistance(*parent, rand);
 				if (returned <= returned2) {
 					// IF NOT COLLIDES:
+					Node *nodeToTest;
+					nodeToTest = CalculateDifferentialPoint(*nodes[i], rand);
+					FVector coordinates = nodeToTest->point;
+					if (map.ObstacleCollisionCheck(coordinates)) continue;
 					NewNode = CalculateDifferentialPoint(*nodes[i], rand);
 					parent = nodes[i];
 					foundNext = true;

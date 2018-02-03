@@ -8,6 +8,10 @@
 #include "KinematicPointMovementComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Node.h"
+#include "DrawDebugHelpers.h"
+#include "Obstacle.h"
+#include <vector>
+#include "MapFunctions.h"
 #include "DifferentialDrive.generated.h"
 /**/
 UCLASS()
@@ -23,6 +27,8 @@ public:
 	FVector GoalPosition;
 	NodeSelector NodeSelector;
 	TArray<Node*> path;
+	MapFunctions map;
+
 	ADifferentialDrive();
 
 protected:
@@ -48,5 +54,7 @@ public:
 	virtual void DrawDebugLines();
 	virtual void DrawGraph();
 	float CalculateDistanceToGoal(const FVector);
+	virtual void DrawObstacles(std::vector<Obstacle>);
+	virtual void DrawMap(Obstacle obs);
 	
 };

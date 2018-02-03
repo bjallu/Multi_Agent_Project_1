@@ -4,6 +4,7 @@
 #include "UnrealEngine.h"
 #include "Components/SphereComponent.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/Pawn.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "ConstructorHelpers.h"
 #include "GameFramework/Pawn.h"
@@ -48,13 +49,19 @@ ADifferentialDrive::ADifferentialDrive()
 
 	MovementComponent = CreateDefaultSubobject<UKinematicPointMovementComponent>(TEXT("CustomMovementComponent"));
 	MovementComponent->UpdatedComponent = RootComponent;
-
+	map = MapFunctions::MapFunctions();
 }
 
 // Called when the game starts or when spawned
 void ADifferentialDrive::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Draw map
+	map.ParseJson("P3");
+	DrawObstacles(map.obstacles);
+	DrawMap(map.bounding_box);
+
 
 }
 
@@ -133,7 +140,7 @@ void ADifferentialDrive::DrawGraph() {
 	float y = 15;							// Change to read from json
 	//NodeSelector.RandomPosition(x, y);
 	FVector goal = FVector(x, y, GetActorLocation().Z);
-	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5, GetActorLocation().Z), FVector(0.9,-0.2, GetActorLocation().Z));
+	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5, GetActorLocation().Z), FVector(0.9,-0.2, GetActorLocation().Z), map);
 
 	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
 		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
@@ -238,4 +245,35 @@ void ADifferentialDrive::MoveToPosition(float x, float y) {
 	FRotator Rotation = FRotationMatrix::MakeFromX(Forward).Rotator();
 	SetActorRotation(Rotation);
 
+}
+
+void ADifferentialDrive::DrawObstacles(std::vector<Obstacle> obs) {
+	const UWorld *world = GetWorld();
+	for (int i = 0; i < obs.size(); ++i) {
+		Obstacle obstocheck = obs[i];
+		for (int j = 0; j < obstocheck.points.size(); ++j) {
+			// Draw from the last to the first 
+			if (j == (obstocheck.points.size() - 1)) {
+				DrawDebugLine(world, FVector(obstocheck.points[j][2], obstocheck.points[j][3], GetActorLocation().Z), FVector(obstocheck.points[0][2], obstocheck.points[0][3], GetActorLocation().Z), FColor::Emerald, true);
+			}
+			//Otherwise we always draw to the next one
+			else {
+				DrawDebugLine(world, FVector(obstocheck.points[j][2], obstocheck.points[j][3], GetActorLocation().Z), FVector(obstocheck.points[j + 1][2], obstocheck.points[j + 1][3], GetActorLocation().Z), FColor::Emerald, true);
+			}
+		}
+	}
+}
+
+void ADifferentialDrive::DrawMap(Obstacle obs) {
+	const UWorld *world = GetWorld();
+	for (int j = 0; j < obs.points.size(); ++j) {
+		// Draw from the last to the first 
+		if (j == (obs.points.size() - 1)) {
+			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], GetActorLocation().Z), FVector(obs.points[0][2], obs.points[0][3], GetActorLocation().Z), FColor::Emerald, true);
+		}
+		//Otherwise we always draw to the next one
+		else {
+			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], GetActorLocation().Z), FVector(obs.points[j + 1][2], obs.points[j + 1][3], GetActorLocation().Z), FColor::Emerald, true);
+		}
+	}
 }

@@ -9,6 +9,7 @@
 #include "Obstacle.h"
 #include "DrawDebugHelpers.h"
 #include "DynamicNode.h"
+#include "MapFunctions.h"
 /**
  * 
  */
@@ -37,7 +38,7 @@ public:
 	void rrt(FVector, FVector);
 	FVector CalculatePoint(const FVector&, const FVector&);
 	float PointDistance(const FVector&, const FVector&);
-	void differentialRrt(const FVector, const FVector, const FVector, const FVector);
+	void differentialRrt(const FVector, const FVector, const FVector, const FVector, const MapFunctions map);
 	Node* CalculateDifferentialPoint(const Node& , const FVector&);
 	float DifferentialDriveDistance(const Node&, const FVector&);
 	float GetGoalOrientation(const FVector &, const FVector&);
