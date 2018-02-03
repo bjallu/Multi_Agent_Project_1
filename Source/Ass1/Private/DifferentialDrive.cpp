@@ -154,7 +154,7 @@ void ADifferentialDrive::DrawGraph() {
 			parent->point.Z = GetActorLocation().Z + 1;
 			//continue;
 			
-			UE_LOG(LogTemp, Display, TEXT("HEIGHT %f"), NodeSelector.nodes[i]->point.Z);
+			//UE_LOG(LogTemp, Display, TEXT("HEIGHT %f"), NodeSelector.nodes[i]->point.Z);
 			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point, FColor::Red, true);
 		}
 		//DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 0.1f, 26, FColor::Blue, true);
