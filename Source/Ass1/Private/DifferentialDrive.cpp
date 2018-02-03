@@ -58,7 +58,7 @@ void ADifferentialDrive::BeginPlay()
 	Super::BeginPlay();
 
 	// Draw map
-	map.ParseJson("P3");
+	map.ParseJson("P2");
 	DrawObstacles(map.obstacles);
 	DrawMap(map.bounding_box);
 
@@ -136,15 +136,19 @@ void ADifferentialDrive::DrawGraph() {
 	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
 	FVector location = GetActorLocation();
 	location.Z = 0;
-	float x = 10;
-	float y = 15;							// Change to read from json
+	float x = 30.0f;
+	float y = 20.0f;							// Change to read from json
+	const UWorld * world = GetWorld();
 	//NodeSelector.RandomPosition(x, y);
+	DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Red, true);
+
+
 	FVector goal = FVector(x, y, GetActorLocation().Z);
 	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5, GetActorLocation().Z), FVector(0.9,-0.2, GetActorLocation().Z), map);
 
 	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
 		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
-	const UWorld * world = GetWorld();
+	//const UWorld * world = GetWorld();
 	//UE_LOG(LogTemp, Display, TEXT("GREEN NODE: %f,%f"), x, y);
 	//DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Green, true);
 

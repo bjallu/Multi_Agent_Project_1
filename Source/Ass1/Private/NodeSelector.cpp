@@ -8,7 +8,7 @@ NodeSelector::NodeSelector()
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 3;
-	NumNodes = 3000;
+	NumNodes = 5000;
 	GoalRadius = 1.f;
 	nodes = TArray<Node*>();
 	DynamicNodes = TArray<DynamicNode*>();
@@ -191,11 +191,15 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 	FVector rand = FVector(x, y, StartPosition.Z);
 	Node* parent = nodes[0];
 	Node* NewNode = parent;
+	float maxX = map.bounding_box.maxX;
+	float minX = map.bounding_box.minX;
+	float maxY = map.bounding_box.maxY;
+	float minY = map.bounding_box.minY;
 	while (count < NumNodes) {
 		foundNext = false;
 		while (!foundNext) {
-			rand.X = FMath::RandRange(-XBound, XBound);
-			rand.Y = FMath::RandRange(-YBound, YBound);
+			rand.X = FMath::RandRange(minX, maxX);
+			rand.Y = FMath::RandRange(minY, maxY);
 			// First check if its in bounding box if it is continue
 			if (map.OutsideBoundingBoxCheck(rand)) continue;
 			if (count % 20 == 0) {
@@ -213,6 +217,7 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 					nodeToTest = CalculateDifferentialPoint(*nodes[i], rand);
 					FVector coordinates = nodeToTest->point;
 					if (map.ObstacleCollisionCheck(coordinates)) continue;
+					UE_LOG(LogTemp, Display, TEXT("do we ever get here"));
 					NewNode = CalculateDifferentialPoint(*nodes[i], rand);
 					parent = nodes[i];
 					foundNext = true;

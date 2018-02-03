@@ -72,7 +72,7 @@ AKinematicPoint::AKinematicPoint()
 	FVector pos_goal = FVector(0.0f, 0.0f, -40.0f);
 	FVector pos_start = FVector(0.0f, 0.0f, -40.0f);
 
-	m_jsonfileName = "P1";
+	m_jsonfileName = "P2";
 }
 
 // Called when the game starts or when spawned
@@ -84,7 +84,7 @@ void AKinematicPoint::BeginPlay()
 	// Create the map 
 	//Obstacle obs = Obstacle::Obstacle();
 	MapFunctions map = MapFunctions::MapFunctions();
-	map.ParseJson("P3");
+	map.ParseJson("P2");
 	DrawObstacles(map.obstacles);
 	DrawMap(map.bounding_box);
 
@@ -195,7 +195,6 @@ void AKinematicPoint::DrawMap(Obstacle obs) {
 		}
 	}
 }
-
 
 void AKinematicPoint::DrawDebugLines() {
 	if (path.Num() != 0) {

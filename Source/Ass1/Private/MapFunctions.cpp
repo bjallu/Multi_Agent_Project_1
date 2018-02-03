@@ -34,7 +34,7 @@ MapFunctions::MapFunctions()
 	// Global offsets
 	double global_z_offset = -40.0f;
 	// The file name
-	m_jsonfileName = "P3";
+	m_jsonfileName = "P2";
 }
 
 void MapFunctions::FindMin(Obstacle& obs, const float& x, const float& y) {
@@ -42,7 +42,7 @@ void MapFunctions::FindMin(Obstacle& obs, const float& x, const float& y) {
 		obs.minX = x;
 	}
 	if (y < obs.minY) {
-		obs.minY;
+		obs.minY = y;
 	}
 }
 
@@ -107,7 +107,7 @@ bool MapFunctions::ParseMap(const FString& jsonfile, const FString& jsonFileName
 			bounding_box = obs;
 		}
 		else if (Name.Find("obstacle") > -1) {
-			Obstacle obs = Obstacle::Obstacle();
+			Obstacle obs =  Obstacle::Obstacle();
 			TArray<TSharedPtr<FJsonValue>> objArray = JsonObject->GetArrayField(Name);
 			for (int32 i = 0; i < objArray.Num(); i++)
 			{
@@ -207,27 +207,30 @@ bool MapFunctions::OutsideBoundingBoxCheck(const FVector& pointToCheck) {
 }
 
 bool MapFunctions::ObstacleCollisionCheck(const FVector& pointToCheck) {
-	std::vector<Obstacle> obs = this->obstacles;
-	for (int i = 0; i < obs.size(); ++i) {
-		if (CollisionCheck(pointToCheck, obs[i])) {
-			return true;
+	//std::vector<Obstacle*> obs = this->obstacles;
+	std::vector<Obstacle> obs = obstacles;
+	double testx = pointToCheck.X;
+	double testy = pointToCheck.Y;
+	for (int k = 0; k < obs.size(); ++k) {
+		bool inside = false;
+		int i = 0;
+		int j = 0;
+		//Obstacle* obstocheck = obs[k];
+		Obstacle obstocheck = obs[k];
+		int nvert = obstocheck.points.size();
+		for (i = 0, j = nvert - 1; i < nvert; j = i++) {
+			if (((obstocheck.points[i][3] > testy) != (obstocheck.points[j][3] > testy)) &&
+				(testx < (obstocheck.points[j][2] - obstocheck.points[i][2]) * (testy - obstocheck.points[i][3]) / (obstocheck.points[j][3] - obstocheck.points[i][3]) + obstocheck.points[i][2]))
+				inside = !inside;
 		}
+		UE_LOG(LogTemp, Display, TEXT("%c"), inside);
+		if (inside)return true;
 	}
 	return false;
 }
 
 bool MapFunctions::CollisionCheck(const FVector& pointToCheck, const Obstacle& obs) {
-	int i = 0; 
-	int j = 0; 
-	int c = 0;
-	for (int i = 0, j = obs.points.size() - 1; i < obs.points.size(); j = i++) {
-		if (((obs.points[i][3] > pointToCheck.Y) != (obs.points[j][3] > pointToCheck.Y)) &&
-			(pointToCheck.X < (obs.points[j][2] - obs.points[i][2]) * (pointToCheck.Y - obs.points[i][3]) / (obs.points[j][3] - obs.points[i][3]) + obs.points[i][2]))
-			c = !c;
-	}
-	if (c == 1)
-		return true;
-	return false;
+	return true;
 }
 
 /*
