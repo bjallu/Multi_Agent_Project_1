@@ -14,6 +14,8 @@ DynamicNode::DynamicNode(DynamicNode* parent, FVector location) {
 DynamicNode::DynamicNode(const DynamicNode& copied) {
 	this->parent = copied.parent;
 	this->point = copied.point;
+	this->Velocity = copied.Velocity;
+	this->Acceleration = copied.Acceleration;
 }
 
 
@@ -33,9 +35,24 @@ DynamicNode::DynamicNode(DynamicNode parent, FVector point, FVector velocity, FV
 	this->Acceleration = acceleration;
 }
 
+DynamicNode::DynamicNode(DynamicNode parent, FVector point, FVector velocity) {
+	this->parent = &parent;
+	this->point = point;
+	this->Velocity = velocity;
+}
+
+DynamicNode::DynamicNode(DynamicNode* parent, FVector point, FVector velocity) {
+	this->parent = parent;
+	this->point = point;
+	this->Velocity = velocity;
+}
+
+DynamicNode::DynamicNode(FVector point, FVector velocity) {
+	this->point = point;
+	this->Velocity = velocity;
+}
 
 
+DynamicNode::~DynamicNode() {
 
-DynamicNode::~DynamicNode()
-{
 }

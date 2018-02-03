@@ -8,16 +8,22 @@ NodeSelector::NodeSelector()
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 3;
+<<<<<<< HEAD
 	NumNodes = 50000;
 	GoalRadius = 1.0f;
+=======
+	NumNodes = 1000;
+	GoalRadius = 1.f;
+>>>>>>> 8d654845d2a3ae72eb1145f4ddf5faca30fd2599
 	nodes = TArray<Node*>();
 	DynamicNodes = TArray<DynamicNode*>();
 	obstacles = TArray<Obstacle>();
 	StepSize = 20;
 	TimeStep = 0.1;
 	VehicleLength = 2;
-	Velocity = 1.1;
+	Velocity = 1.0;
 	MaxTurnSpeed = 1.0;
+	Acceleration = 1.3;
 	GoalVelocity = FVector(0.5f, -0.5f, 0.0f);
 }
 
@@ -45,6 +51,7 @@ void NodeSelector::GetDynamicRrtPath(TArray<DynamicNode*>& vectors) {
 	//nodes[0] is startposition so shouldnt include it
 	DynamicNode* CurrentNode = DynamicNodes[DynamicNodes.Num() - 1];
 	while (CurrentNode->point != DynamicNodes[0]->point) {
+		//UE_LOG(LogTemp, Display, TEXT("CurrentNode x, y : %f, %f"), CurrentNode->point.X, CurrentNode->point.Y);
 		CurrentNode->point.Z = 0;
 		vectors.Add(CurrentNode);
 		CurrentNode = CurrentNode->parent;
@@ -276,10 +283,29 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 //Dynamic Point RRT
 //-------------------------------------------------------//
 
+DynamicNode* NodeSelector::CalculateDynamicPointNode(const DynamicNode& n1, FVector n2) {
+	
+	FVector currentVelocity = n1.Velocity;
+	FVector direction = n2 - n1.point;
+	//Make acceleration towards direction
+	direction /= direction.Size(); //Normalize;
+	direction *= Acceleration;     //Set to max acceleration
+	if (currentVelocity.Size() > Velocity) {
+		currentVelocity /= currentVelocity.Size(); //Normalize
+		currentVelocity *= Velocity;			//Set to max velocity
+		//UE_LOG(LogTemp, Display, TEXT("New Velocity: %f"), currentVelocity.Size());
+	}
+	FVector NewVelocity = currentVelocity + direction;
+	NewVelocity = NewVelocity * Velocity / NewVelocity.Size(); //Set length to velocity
+	FVector NewPosition = n1.point + NewVelocity * TimeStep;
+
+	return new DynamicNode(n1,NewPosition,NewVelocity);
+}
+
 void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, FVector StartVelocity, FVector EndVelocity) {
 	DynamicNodes.Empty();
 	//Create startnode
-	DynamicNode* StartNode = new DynamicNode(StartPosition);
+	DynamicNode* StartNode = new DynamicNode(StartPosition, StartVelocity);
 	DynamicNodes.Add(StartNode);
 	int count = 0;
 	bool foundNext = false;
@@ -287,6 +313,7 @@ void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, F
 	float y = 0;
 	FVector rand = FVector(x, y, StartPosition.Z);
 	DynamicNode* parent = DynamicNodes[0];
+	DynamicNode* NewNode = parent;
 	while (count < NumNodes) {
 		//Check if there is a straight line to the target from the current position
 		foundNext = false;
@@ -301,20 +328,19 @@ void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, F
 			}
 			for (int i = 0; i < DynamicNodes.Num(); ++i) {
 				if (PointDistance(DynamicNodes[i]->point, rand) <= PointDistance(parent->point, rand)) {
-					FVector NewPoint = CalculatePoint(DynamicNodes[i]->point, rand);
+					NewNode = CalculateDynamicPointNode(*DynamicNodes[i], rand);
 					parent = DynamicNodes[i];
 					foundNext = true;
 				}
 			}
 		}
-		FVector NewNode = CalculatePoint(parent->point, rand);
 		//NewNode.Z = 70.f;
 		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NewNode.X, NewNode.Y);
 
-		DynamicNodes.Add(new DynamicNode(parent, NewNode));
+		DynamicNodes.Add(new DynamicNode(parent, NewNode->point,NewNode->Velocity));
 
-		if (PointDistance(NewNode, EndPosition)<GoalRadius) {
-			DynamicNodes.Add(new DynamicNode(parent, EndPosition));
+		if (PointDistance(NewNode->point, EndPosition)<GoalRadius) {
+			DynamicNodes.Add(new DynamicNode(parent, EndPosition, EndVelocity));
 			UE_LOG(LogTemp, Display, TEXT("FOUND GOAL"));
 			count = NumNodes;
 		}
@@ -322,6 +348,7 @@ void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, F
 		count++;
 	}
 	UE_LOG(LogTemp, Display, TEXT("nr of nodes: %d"), DynamicNodes.Num());
+	//UE_LOG(LogTemp, Display, TEXT("Node 2 point: %f, %f"), DynamicNodes[2]->point.X, DynamicNodes[2]->point.Y);
 }
 
 

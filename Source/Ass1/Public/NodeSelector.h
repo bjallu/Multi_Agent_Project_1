@@ -22,6 +22,7 @@ public:
 	float NumNodes;
 	float GoalRadius;
 	float StepSize;
+	float Acceleration;
 	TArray<Node*> nodes;
 	TArray<DynamicNode*> DynamicNodes;
 	TArray<Obstacle> obstacles;
@@ -45,6 +46,7 @@ public:
 	float GetCosAngle(const FVector&, const FVector&);
 	void dynamicPointRrt(FVector, FVector, FVector, FVector);
 	void GetDynamicRrtPath(TArray<DynamicNode*>&);
+	DynamicNode* CalculateDynamicPointNode(const DynamicNode&, FVector);
 
 
 

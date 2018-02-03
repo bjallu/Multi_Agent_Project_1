@@ -139,27 +139,27 @@ void ADynamicPoint::DrawGraph() {
 	float y = 15;							// Change to read from json
 	FVector goal = FVector(x, y, 0.f);
 	NodeSelector.dynamicPointRrt(goal, location, startVelocity, goalVelocity);
-	UE_LOG(LogTemp,Display,TEXT("%f,%f"),GetActorLocation().X,GetActorLocation().Y)
+	//UE_LOG(LogTemp,Display,TEXT("%f,%f"),GetActorLocation().X,GetActorLocation().Y)
 	//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
 	const UWorld * world = GetWorld();
 	
-	if (NodeSelector.DynamicNodes.Num() != 0) {
-		FVector current;
-		FVector next;
-		
-		for (int i = 1; i < NodeSelector.DynamicNodes.Num(); ++i) {
-			DynamicNode* parent = NodeSelector.DynamicNodes[i]->parent;
-			DrawDebugLine(world, NodeSelector.DynamicNodes[i]->point, parent->point,FColor::Red, true);
-		}
-		DrawDebugSphere(world, NodeSelector.DynamicNodes[NodeSelector.DynamicNodes.Num() - 1]->point, 1.f, 26, FColor::Blue, true);
-		
-		DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 1, 26, FColor::Green, true);
+	for (int i = 1; i < NodeSelector.DynamicNodes.Num(); ++i) {
+		DynamicNode* parent = NodeSelector.DynamicNodes[i]->parent;
+		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
+		NodeSelector.DynamicNodes[i]->point.Z = GetActorLocation().Z + 1;
+
+		parent->point.Z = GetActorLocation().Z + 1;
+		//continue;
+
+		//UE_LOG(LogTemp, Display, TEXT("HEIGHT %f"), NodeSelector.nodes[i]->point.Z);
+		DrawDebugLine(world, NodeSelector.DynamicNodes[i]->point, parent->point, FColor::Red, true);
 	}
 	//Move that shit
 	
 	NodeSelector.GetDynamicRrtPath(path);
-	HasGoalPosition = true;
+	HasGoalPosition = true;					// CRASHES
 	DrawDebugLines();
+	
 	
 	
 }
