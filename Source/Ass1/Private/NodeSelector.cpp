@@ -221,7 +221,7 @@ void NodeSelector::rrt(FVector EndPosition, FVector StartPosition) {
 			}
 		}
 		FVector NewNode = CalculatePoint(parent->point, rand);
-		NewNode.Z = 70.f;
+		//NewNode.Z = 70.f;
 		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NewNode.X, NewNode.Y);
 
 		nodes.Add(new Node(parent, NewNode));
@@ -270,35 +270,44 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 				}
 			}
 		}
-		NewNode->point.Z = 70.f;
 		nodes.Add(new Node(parent, NewNode->point, NewNode->orientation));
-		//UE_LOG(LogTemp, Display, TEXT("New Position: %f, %f"), NewNode->point.X, NewNode->point.Y);
-		//UE_LOG(LogTemp, Display, TEXT("New orientat: %f, %f"), NewNode->orientation.X, NewNode->orientation.Y);
 		if (PointDistance(NewNode->point, EndPosition)<GoalRadius) {
 			nodes.Add(new Node(parent, EndPosition, NewNode->orientation));
 			//Rotate to the correct position
 			float MaxTurnDistance = TimeStep * MaxTurnSpeed;
-			//float Vx = cos(EndOrientation);
-			//float Vy = sin(EndOrientation);
 			int timeswerotate = 0;
-			//UE_LOG(LogTemp, Display, TEXT("MaxAngleTurn: %f"), MaxTurnDistance);
-			//UE_LOG(LogTemp, Display, TEXT("Endorientation: %f NewNode orientation: %f"), EndOrientation, NewNode->orientation);
-			while (abs(EndOrientation.X - nodes[nodes.Num()-1]->orientation.X) < 0.1f || (abs(EndOrientation.Y - nodes[nodes.Num() - 1]->orientation.Y) < 0.1f)){
+			float angle = acos(GetCosAngle(nodes[nodes.Num() - 1]->orientation, EndOrientation));
+			while (!(angle<0.1f)){
 				//Rotate into place
 				timeswerotate++;
-				FVector goal = nodes[nodes.Num() - 1]->orientation;
-				float dot = FVector::DotProduct(EndOrientation, goal);
-				float det = EndOrientation.X * goal.Y - goal .X* EndOrientation.Y;
-				float angleDistance = atan2(det, dot);
 				//float angleDistance = EndOrientation - nodes[nodes.Num() - 1]->orientation;
-				UE_LOG(LogTemp, Display, TEXT("AngleDistance: %f"), angleDistance);
+				angle = acos(GetCosAngle(nodes[nodes.Num() - 1]->orientation, EndOrientation));
+				float angleDistance = acos(GetCosAngle(FVector(1, 0, 0), nodes[nodes.Num() - 1]->orientation));
+				UE_LOG(LogTemp, Display, TEXT("orientation: %f"), angle);
+				if (nodes[nodes.Num() - 1]->orientation.Y < 0)
+					angleDistance = -angleDistance;
+				if (angle > 0.00001) {
+					FVector cross = FVector::CrossProduct(EndOrientation, nodes[nodes.Num() - 1]->orientation);
+					float partTurn = MaxTurnSpeed * TimeStep / angle;
+					if (partTurn > 1)
+						partTurn = 1;
+					if (cross.Z > 0)
+						angle = -angle;
+					float turnAngle = angle * partTurn;
+					angleDistance = (turnAngle + angleDistance);
+				}
 				if (abs(angleDistance) <= MaxTurnDistance) {
 					nodes.Add(new Node(nodes[nodes.Num()-1], EndPosition, EndOrientation));
+					UE_LOG(LogTemp, Display, TEXT("FOUND GOAL, rotated %d times"), timeswerotate);
 					return;
 				}
-				nodes.Add(new Node(nodes[nodes.Num()-1], NewNode->point, nodes[nodes.Num() - 1]->orientation + copysign(1.0,-angleDistance)*MaxTurnDistance));
+				FVector newOrientation = FVector(cos(angleDistance), sin(angleDistance), nodes[nodes.Num() - 1]->point.Z);
+				nodes.Add(new Node(nodes[nodes.Num()-1], EndPosition, newOrientation));
+				//update angle
+				angle = acos(GetCosAngle(nodes[nodes.Num() - 1]->orientation, EndOrientation));
+				//
 			}
-			UE_LOG(LogTemp, Display, TEXT("FOUND GOAL, rotated %d times"),timeswerotate);
+			UE_LOG(LogTemp, Display, TEXT("Uhh didnt find node"),timeswerotate);
 			count = NumNodes;
 		}
 		count++;
