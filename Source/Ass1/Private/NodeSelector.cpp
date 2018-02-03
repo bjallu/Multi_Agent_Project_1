@@ -18,6 +18,7 @@ NodeSelector::NodeSelector()
 	VehicleLength = 2;
 	Velocity = 1.1;
 	MaxTurnSpeed = 1.0;
+	Acceleration = 1.3;
 	GoalVelocity = FVector(0.5f, -0.5f, 0.0f);
 }
 
@@ -262,10 +263,28 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 //Dynamic Point RRT
 //-------------------------------------------------------//
 
+DynamicNode* NodeSelector::CalculateDynamicPointNode(const DynamicNode& n1, FVector n2) {
+	FVector currentVelocity = n1.Velocity;
+	FVector direction = n2 - n1.point;
+	//Make acceleration towards direction
+	direction /= direction.Size(); //Normalize;
+	direction *= Acceleration;     //Set to max acceleration
+	if (currentVelocity.Size() > Velocity) {
+		currentVelocity /= currentVelocity.Size(); //Normalize
+		currentVelocity *= Velocity;			//Set to max velocity
+		UE_LOG(LogTemp, Display, TEXT("New Velocity: %f"), currentVelocity.Size());
+	}
+	FVector NewVelocity = currentVelocity + direction;
+	NewVelocity = NewVelocity * Velocity / NewVelocity.Size(); //Set length to velocity
+	FVector NewPosition = n1.point + NewVelocity * TimeStep;	
+
+	return new DynamicNode(n1,NewPosition,NewVelocity);
+}
+
 void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, FVector StartVelocity, FVector EndVelocity) {
 	DynamicNodes.Empty();
 	//Create startnode
-	DynamicNode* StartNode = new DynamicNode(StartPosition);
+	DynamicNode* StartNode = new DynamicNode(StartPosition, StartVelocity);
 	DynamicNodes.Add(StartNode);
 	int count = 0;
 	bool foundNext = false;
