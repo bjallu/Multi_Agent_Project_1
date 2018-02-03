@@ -26,7 +26,7 @@ public:
 	bool HasGoalPosition = false;
 	FVector GoalPosition;
 	NodeSelector NodeSelector;
-	TArray<Node*> path;
+	TArray<DynamicNode*> path;
 	ADynamicPoint();
 
 protected:
@@ -46,11 +46,10 @@ public:
 	virtual void MoveRight(float AxisValue);
 	virtual void Turn(float AxisValue);
 	virtual void RandomTurn();
-	virtual void RandomPosition();
 	virtual void MoveToPosition(float x, float y);
-	virtual void GetPath();
 	virtual void DrawDebugLines();
 	virtual void DrawGraph();
 	float CalculateDistanceToGoal(const FVector);
+
 
 };

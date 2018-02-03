@@ -224,7 +224,7 @@ void ADifferentialDrive::RandomPosition() {
 }
 
 void ADifferentialDrive::GetPath() {
-	NodeSelector.GetPath(path);
+	//NodeSelector.GetPath(path);
 	HasGoalPosition = true;
 	DrawDebugLines();
 }

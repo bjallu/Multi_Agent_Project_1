@@ -42,6 +42,7 @@ Node::Node(Node* parent, FVector location, FVector orientation) {
 	this->orientation = orientation;
 }
 
+
 Node::~Node()
 {
 }
