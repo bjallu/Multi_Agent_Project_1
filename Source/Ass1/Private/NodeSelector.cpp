@@ -2,7 +2,6 @@
 
 #include "NodeSelector.h"
 
-
 NodeSelector::NodeSelector()
 {
 	XBound = 30.f;

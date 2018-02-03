@@ -63,8 +63,6 @@ public:
 	virtual void GetPath();
 	virtual void DrawDebugLines();
 	virtual void DrawGraph();
-	virtual void DrawMap(std::vector<Obstacle>);
-	// Our json parser for the P1-P3 files
-	bool ParseJson(const FString& jsonfile);
-	bool ParseMap(const FString& jsonfile, const FString& jsonFileName, const FString& jsonData);
+	virtual void DrawObstacles(std::vector<Obstacle>);
+	virtual void DrawMap(Obstacle obs);
 };

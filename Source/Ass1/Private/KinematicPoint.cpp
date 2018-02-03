@@ -17,6 +17,7 @@
 #include <string> 
 #include <list>
 #include <vector>
+#include <MapFunctions.h>
 
 AKinematicPoint::AKinematicPoint()
 {
@@ -80,8 +81,16 @@ void AKinematicPoint::BeginPlay()
 
 	Super::BeginPlay();
 
-	if (!m_jsonfileName.IsEmpty())
-		ParseJson(m_jsonfileName);
+	// Create the map 
+	//Obstacle obs = Obstacle::Obstacle();
+	MapFunctions map = MapFunctions::MapFunctions();
+	map.ParseJson("P3");
+	DrawObstacles(map.obstacles);
+	DrawMap(map.bounding_box);
+
+	// Change to link to da graph and get all initial positiona and speed values from there
+	//if (!m_jsonfileName.IsEmpty())
+	//	ParseJson(m_jsonfileName);
 
 }
 
@@ -123,311 +132,6 @@ void AKinematicPoint::DrawGraph() {
 
 }
 
-bool AKinematicPoint::ParseJson(const FString& jsonfile)
-{
-	FString jsonData;
-	FString jsonFileName = jsonfile + ".json";
-	FString fileName = "Maps/" + jsonFileName;
-	FString path = FPaths::Combine(*FPaths::GameContentDir(), *fileName);
-    // Could have to use FPaths::ProjectContentDir()
-
-	FFileHelper::LoadFileToString(jsonData, *path);
-	//UE_LOG(LogTemp, Display, TEXT("%s"), *jsonData);
-	//Create a pointer to hold the json serialized data
-	//TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-
-	//Create a reader pointer to read the json data
-	//const TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(jsonData);
-	
-	//Deserialize the json data given Reader and the actual object to deserialize
-	//bool readSuccess = FJsonSerializer::Deserialize(JsonReader, JsonObject);
-	//if (readSuccess)
-//	{
-		// Parse this shit 
-		bool value = ParseMap(jsonfile, jsonFileName, jsonData);
-		return value;
-	//}
-	//else {
-		//return value;
-	//}
-	
-}
-bool AKinematicPoint::ParseMap(const FString& jsonfile, const FString& jsonFileName, const FString& jsonData)
-{
-	//Create a pointer to hold the json serialized data
-	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-
-	//Create a reader pointer to read the json data
-	const TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(jsonData);
-
-	// Process of Deserializing
-	bool readSuccess = FJsonSerializer::Deserialize(JsonReader, JsonObject);
-	if (!readSuccess)
-	{
-	    UE_LOG(LogTemp, Display, TEXT("Couldnt serialize (sadface)"));
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, jsonFileName);
-		return false;
-	}
-	// Else we start our parsing
-
-	//Get the value of the json object by field name
-
-	//public float vehicle_L, vehicle_a_max, vehicle_dt, vehicle_omega_max, vehicle_t, vehicle_phi_max, vehicle_v_max;
-	//public float[] vel_goal, vel_start, pos_goal, pos_start;
-
-	std::vector<Obstacle> vobs;
-
-	for (auto currJsonValue = JsonObject->Values.CreateConstIterator(); currJsonValue; ++currJsonValue)
-	{
-		// Get the key name
-		const FString Name = (*currJsonValue).Key;
-		// Check if its a obstacle or the bounding box
-		if (Name.Find("bounding_polygon") > -1) {
-			// Create obstacle which acts as the bounding polygon
-			Obstacle obs = Obstacle::Obstacle();
-			// Iterate through all of the values
-			//TSharedPtr<FJsonValue> Value = (*currJsonValue).Value;
-			//const TArray < TSharedPtr < FJsonValue > > Value;// .AsArray();
-			//std::array<std::string, 3> strarr = { "ram", "mohan", "sita" }
-			//TSharedPtr<FJsonObject> jsonObj = JsonObject->GetObjectField("vehicle_L");
-			TArray<TSharedPtr<FJsonValue>> objArray = JsonObject->GetArrayField(Name);
-			for (int32 i = 0; i < objArray.Num(); i++)
-			{
-				TArray<TSharedPtr<FJsonValue>> Obstacle_Coordinates = objArray[i]->AsArray();
-				double x = Obstacle_Coordinates[0]->AsNumber();
-				double y = Obstacle_Coordinates[1]->AsNumber();
-				obs.AddObstaclePoint(x, y);
-			}
-			vobs.push_back(obs);
-		}
-		else if (Name.Find("obstacle") > -1) {
-			Obstacle obs = Obstacle::Obstacle();
-			// Iterate through all of the values
-			//TSharedPtr<FJsonValue> Value = (*currJsonValue).Value;
-			//const TArray < TSharedPtr < FJsonValue > > Value;// .AsArray();
-			//std::array<std::string, 3> strarr = { "ram", "mohan", "sita" }
-			//TSharedPtr<FJsonObject> jsonObj = JsonObject->GetObjectField("vehicle_L");
-			TArray<TSharedPtr<FJsonValue>> objArray = JsonObject->GetArrayField(Name);
-			for (int32 i = 0; i < objArray.Num(); i++)
-			{
-				TArray<TSharedPtr<FJsonValue>> Obstacle_Coordinates = objArray[i]->AsArray();
-				double x = Obstacle_Coordinates[0]->AsNumber();
-				double y = Obstacle_Coordinates[1]->AsNumber();
-				obs.AddObstaclePoint(x, y);
-			}
-			vobs.push_back(obs);
-		}
-		// Now only values which we need to pair up no more obstacles
-		// remember origin coordinates
-		else {
-			if (Name == "vehicle_L"){
-				double objvalue = JsonObject->GetNumberField(Name);
-				vehicle_L = objvalue;
-			}
-			if (Name == "vehicle_a_max") {
-				double objvalue = JsonObject->GetNumberField(Name);
-				vehicle_a_max = objvalue;
-			}
-			if (Name == "vehicle_dt") {
-				double objvalue = JsonObject->GetNumberField(Name);
-				vehicle_dt = objvalue;
-			}
-			if (Name == "vehicle_omega_max") {
-				double objvalue = JsonObject->GetNumberField(Name);
-				vehicle_omega_max = objvalue;
-			}
-			if (Name == "vehicle_t") {
-				double objvalue = JsonObject->GetNumberField(Name);
-				vehicle_t = objvalue;
-			}
-			if (Name == "vehicle_phi_max") {
-				double objvalue = JsonObject->GetNumberField(Name);
-				vehicle_phi_max = objvalue;
-			}
-			if (Name == "vehicle_v_max") {
-				double objvalue = JsonObject->GetNumberField(Name);
-				vehicle_v_max = objvalue;
-			}
-			if (Name == "vel_goal") {
-				TArray<TSharedPtr<FJsonValue>> objArray = JsonObject->GetArrayField(Name);
-				double x = objArray[0]->AsNumber();
-				double y = objArray[1]->AsNumber();
-				vel_goal = FVector(x, y, -40.f);
-			}
-			if (Name == "vel_start") {
-				TArray<TSharedPtr<FJsonValue>> objArray = JsonObject->GetArrayField(Name);
-				double x = objArray[0]->AsNumber();
-				double y = objArray[1]->AsNumber();
-				vel_start = FVector(x, y, -40.f);
-			}
-			if (Name == "pos_goal") {
-				TArray<TSharedPtr<FJsonValue>> objArray = JsonObject->GetArrayField(Name);
-				double x = objArray[0]->AsNumber();
-				double y = objArray[1]->AsNumber();
-				pos_goal = FVector(x, y, -40.0f);
-			}
-			if (Name == "pos_start") {
-				TArray<TSharedPtr<FJsonValue>> objArray = JsonObject->GetArrayField(Name);
-				double x = objArray[0]->AsNumber();
-				double y = objArray[1]->AsNumber();
-				pos_start = FVector(x, y, -40.0f);				
-			}
-		}
-	}
-			/*
-			for (int32 Index = 0; Index != Value.; ++Index)
-			{
-				JoinedStr += StrArr[Index];
-				JoinedStr += TEXT(" ");
-			}
-			for (const std::string& str : strarr) {
-				obs.AddObstaclePoint()
-				listbox.items.add(str);
-			}
-		}
-		// Otherwise just get the parameter values 
-
-		// Get the value as a FJsonValue object
-		TSharedPtr< FJsonValue > Value = (*currJsonValue).Value;
-
-		UE_LOG(LogTemp, Display, TEXT("parameter %s "), *Name);
-		// Do your stuff with crazy casting and other questionable rituals
-	}
-	/*
-	string[] json = jsonString.Split('\n');
-	obstacles = new List<Polygon>();
-	for (int i = 0; i < json.Length; i++) {
-		string obstacle = json[i];
-		if ( (obstacle.find("bounding_polygon") != std::string::npos) || (obstacle.find("obstacle" != std::string::npos)){
-			//Polygon poly = new Polygon(json[i]); our obstacle class do when we merge
-			for (int j = i + 1; j < obstacle.Length - 1; j += 4) {
-				if (json[j].Contains("]") && json[j - 1].Contains("]")) {
-					break;
-				}
-				if (json[j].Contains("[")) {
-					string x_cor = json[j + 1].Trim(' ').Trim(',').Trim(',').Trim('\r').Trim(',');
-					string y_cor = json[j + 2].Trim(' ').Trim(',');
-					double x_coordinate = double.Parse(x_cor, CultureInfo.InvariantCulture);
-					double y_coordinate = double.Parse(y_cor, CultureInfo.InvariantCulture);
-					poly.addCorner(x_coordinate, y_coordinate);
-				}
-			}
-			obstacles.Add(poly);
-		}
-	}
-	string str("There are two needles in this haystack.");
-	string str2("needle");
-
-	if (str.find(str2) != string::npos) {
-		//.. found.
-	}
-	TSharedPtr<FJsonObject> jsonObj = JsonObject->GetObjectField("vehicle_L");
-	TArray<TSharedPtr<FJsonValue>> objArray = jsonObj->GetArrayField("rows");
-
-	for (int32 i = 0; i < objArray.Num(); i++)
-	{
-
-		TArray<TSharedPtr<FJsonValue>> height = objArray[i]->AsArray();
-		FString name = height[0]->AsString();
-
-		UE_LOG(LogTemp, Warning, TEXT("Value I'm looking for %s"), *name);
-	}
-	/*
-	TArray< TSharedPtr<FJsonValue> > ParsedTableRows = JsonObject->GetArrayField(arrayFieldName);
-
-	// Iterate over rows
-	for (int32 RowIdx = 0; RowIdx < ParsedTableRows.Num(); ++RowIdx)
-	{
-		const TSharedPtr<FJsonValue>& ParsedTableRowValue = ParsedTableRows[RowIdx];
-		TSharedPtr<FJsonObject> ParsedTableRowObject = ParsedTableRowValue->AsObject();
-		if (!ParsedTableRowObject.IsValid())
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
-				FString::Printf(TEXT("Row '%d' is not a valid JSON object."),
-					RowIdx));
-			continue;
-		}
-
-		// read row. if it return false, continue
-		if (!ReadPhraseRow(ParsedTableRowObject.ToSharedRef(), RowIdx))
-			continue;
-		*/
-	/*
-	// Empty existing data
-	m_PhraseDataTable->EmptyTable();
-
-	// Array Field Name - The first array field's name
-	// should be same as character
-	FString arrayFieldName = jsonfile;
-
-	// Parse by my rule
-	TArray< TSharedPtr<FJsonValue> > ParsedTableRows = JsonObject->GetArrayField(arrayFieldName);
-
-	// Iterate over rows
-	for (int32 RowIdx = 0; RowIdx < ParsedTableRows.Num(); ++RowIdx)
-	{
-		const TSharedPtr<FJsonValue>& ParsedTableRowValue = ParsedTableRows[RowIdx];
-		TSharedPtr<FJsonObject> ParsedTableRowObject = ParsedTableRowValue->AsObject();
-		if (!ParsedTableRowObject.IsValid())
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red,
-				FString::Printf(TEXT("Row '%d' is not a valid JSON object."),
-					RowIdx));
-			continue;
-		}
-
-		// read row. if it return false, continue
-		if (!ReadPhraseRow(ParsedTableRowObject.ToSharedRef(), RowIdx))
-			continue;
-	}
-
-	    public float vehicle_L, vehicle_a_max, vehicle_dt, vehicle_omega_max, vehicle_t, vehicle_phi_max, vehicle_v_max;
-    public float[] vel_goal, vel_start, pos_goal, pos_start;
-    public List<Polygon> obstacles;
-
-    public static Problem Import(string filePath) {
-        StreamReader reader = new StreamReader(filePath);
-        string json = reader.ReadToEnd();
-        reader.Close();
-        Problem map = JsonUtility.FromJson<Problem>(json);
-        map.read_polygons(json);
-        return map;
-    }
-
-    private void read_polygons(string jsonString) {
-        string[] json = jsonString.Split('\n');
-        obstacles = new List<Polygon>();
-        for (int i = 0; i < json.Length; i++) {
-            if (json[i].Contains("bounding_polygon") || json[i].Contains("obstacle")) {
-                Polygon poly = new Polygon(json[i]);
-                for (int j = i + 1; j < json.Length - 1; j += 4) {
-                    if (json[j].Contains("]") && json[j - 1].Contains("]")) {
-                        break;
-                    }
-                    if (json[j].Contains("[")) {
-                        string x_cor = json[j + 1].Trim(' ').Trim(',').Trim(',').Trim('\r').Trim(',');
-                        string y_cor = json[j + 2].Trim(' ').Trim(',');
-                        double x_coordinate = double.Parse(x_cor, CultureInfo.InvariantCulture);
-                        double y_coordinate = double.Parse(y_cor, CultureInfo.InvariantCulture);
-                        poly.addCorner(x_coordinate, y_coordinate);
-                    }
-                }
-                obstacles.Add(poly);
-            }
-        }
-
-    }
-
-	// Modify the datatable
-	m_PhraseDataTable->Modify(true);
-	*/
-
-	DrawMap(vobs);
-
-	return true;
-}
-
-
 // Called every frame
 void AKinematicPoint::Tick(float DeltaTime)
 {
@@ -460,7 +164,7 @@ void AKinematicPoint::Tick(float DeltaTime)
 }
 
 
-void AKinematicPoint::DrawMap(std::vector<Obstacle> obs) {
+void AKinematicPoint::DrawObstacles(std::vector<Obstacle> obs) {
 	const UWorld *world = GetWorld();
 	for (int i = 0; i < obs.size(); ++i){
 		Obstacle obstocheck = obs[i];
@@ -476,6 +180,21 @@ void AKinematicPoint::DrawMap(std::vector<Obstacle> obs) {
 		}
 	}
 }
+
+void AKinematicPoint::DrawMap(Obstacle obs) {
+	const UWorld *world = GetWorld();
+	for (int j = 0; j < obs.points.size(); ++j) {
+		// Draw from the last to the first 
+		if (j == (obs.points.size() - 1)) {
+			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], GetActorLocation().Z), FVector(obs.points[0][2], obs.points[0][3], GetActorLocation().Z), FColor::Emerald, true);
+		}
+		//Otherwise we always draw to the next one
+		else {
+			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], GetActorLocation().Z), FVector(obs.points[j + 1][2], obs.points[j + 1][3], GetActorLocation().Z), FColor::Emerald, true);
+		}
+	}
+}
+
 
 void AKinematicPoint::DrawDebugLines() {
 	if (path.Num() != 0) {

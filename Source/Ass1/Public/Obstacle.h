@@ -17,7 +17,10 @@ class ASS1_API Obstacle
 public:
 	int N;
 	std::vector<std::vector<int>> points;
-
+	float maxY;
+	float minY;
+	float maxX;
+	float minX;
 	void AddObstaclePoint(float, float);
 	Obstacle();
 	~Obstacle();

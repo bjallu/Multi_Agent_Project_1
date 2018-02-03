@@ -4,8 +4,20 @@
 
 Obstacle::Obstacle()
 {
+	double lowest(std::numeric_limits<double>::lowest());
+	double max(std::numeric_limits<double>::max());
+
 	this->N = 0;
 	//this->points = vector<vector<int>>(10);
+	this->maxY = lowest;
+	this->minY = max;
+	this->maxX = lowest;
+	this->minX = max;
+
+	//double infinity(std::numeric_limits<double>::infinity());
+	//double neg_infinity(-std::numeric_limits<double>::infinity());
+	//double lowest(std::numeric_limits<double>::lowest());
+
 }
 
 Obstacle::~Obstacle()
@@ -18,27 +30,3 @@ void Obstacle::AddObstaclePoint(float x, float y) {
 	np.push_back(y);
 	this->points.push_back(np);
 }
-
-/*
-class Line {
-public:
-	void setLength(double len);
-	double getLength(void);
-	Line(double len);  // This is the constructor
-
-private:
-	double length;
-};
-
-// Member functions definitions including constructor
-Line::Line(double len) {
-	cout << "Object is being created, length = " << len << endl;
-	length = len;
-}
-void Line::setLength(double len) {
-	length = len;
-}
-double Line::getLength(void) {
-	return length;
-}
-*/

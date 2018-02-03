@@ -7,3 +7,5 @@
 *.suo
 /Content
 *.vs
+Intermediate/ProjectFiles/MapFunctions.cpp
+Intermediate/ProjectFiles/MapFunctions.h
