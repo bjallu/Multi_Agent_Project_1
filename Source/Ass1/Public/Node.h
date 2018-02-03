@@ -23,4 +23,6 @@ public:
 	Node(Node* parent, FVector location, FVector orientation);
 	Node(FVector, FVector);
 	Node(const Node& copied, FVector location, FVector orientation);
+
+
 };

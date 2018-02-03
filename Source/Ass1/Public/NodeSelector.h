@@ -8,7 +8,7 @@
 #include "Algo/Reverse.h"
 #include "Obstacle.h"
 #include "DrawDebugHelpers.h"
-
+#include "DynamicNode.h"
 /**
  * 
  */
@@ -22,6 +22,7 @@ public:
 	float GoalRadius;
 	float StepSize;
 	TArray<Node*> nodes;
+	TArray<DynamicNode*> DynamicNodes;
 	TArray<Obstacle> obstacles;
 	float TimeStep;
 	float Velocity;
@@ -33,7 +34,6 @@ public:
 	~NodeSelector();
 	void GetRrtPath(TArray<Node*>& vectors);
 	void RandomPosition(float&, float&);
-	void GetPath(TArray<Node*>&);
 	void rrt(FVector, FVector);
 	FVector CalculatePoint(const FVector&, const FVector&);
 	float PointDistance(const FVector&, const FVector&);
@@ -41,10 +41,9 @@ public:
 	Node* CalculateDifferentialPoint(const Node& , const FVector&);
 	float DifferentialDriveDistance(const Node&, const FVector&);
 	float GetGoalOrientation(const FVector &, const FVector&);
-	bool CollisionCheck(const FVector&, const Obstacle&);
-	bool CheckTrivialPath(const FVector&, const FVector &);
-	bool Collides(const FVector&);
 	float GetCosAngle(const FVector&, const FVector&);
+	void dynamicPointRrt(FVector, FVector, FVector, FVector);
+	void GetDynamicRrtPath(TArray<DynamicNode*>&);
 
 
 

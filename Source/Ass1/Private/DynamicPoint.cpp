@@ -108,8 +108,8 @@ void ADynamicPoint::DrawDebugLines() {
 		FVector next;
 		DrawDebugLine(world, GetActorLocation(), FVector(path[0]->point.X, path[0]->point.Y, GetActorLocation().Z), FColor::Emerald, true);
 		for (int i = 0; i < path.Num() - 1; ++i) {
-			current = FVector(path[i]->point.X, path[i]->point.Y, GetActorLocation().Z);
-			next = FVector(path[i + 1]->point.X, path[i + 1]->point.Y, GetActorLocation().Z);
+			current = FVector(path[i]->point.X, path[i]->point.Y, GetActorLocation().Z+1);
+			next = FVector(path[i + 1]->point.X, path[i + 1]->point.Y, GetActorLocation().Z+1);
 			DrawDebugLine(world, current, next, FColor::Emerald, true);
 		}
 	}
@@ -124,8 +124,6 @@ void ADynamicPoint::SetupPlayerInputComponent(UInputComponent* InputComponent)
 	InputComponent->BindAxis("MoveRight", this, &ADynamicPoint::MoveRight);
 	//InputComponent->BindAxis("Turn", this, &ADynamicPoint::Turn);
 	InputComponent->BindAction("RandomDirection",IE_Pressed, this, &ADynamicPoint::RandomTurn);
-	InputComponent->BindAction("RandomPosition", IE_Pressed, this, &ADynamicPoint::RandomPosition);
-	InputComponent->BindAction("RandomPath", IE_Pressed, this, &ADynamicPoint::GetPath);
 	InputComponent->BindAction("DrawGraph", IE_Pressed, this, &ADynamicPoint::DrawGraph);
 
 }
@@ -133,32 +131,33 @@ void ADynamicPoint::SetupPlayerInputComponent(UInputComponent* InputComponent)
 void ADynamicPoint::DrawGraph() {
 	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
 	FVector location = GetActorLocation();
-	location.Z = 0;
+	FVector startVelocity = FVector(0.5, -0.5, 0.0);
+	FVector goalVelocity = FVector(0.9, -0.2, 0.0);
+
+	//location.Z = 0;
 	float x = 10;
 	float y = 15;							// Change to read from json
 	FVector goal = FVector(x, y, 0.f);
-	NodeSelector.rrt(goal, location);
+	NodeSelector.dynamicPointRrt(goal, location, startVelocity, goalVelocity);
 	UE_LOG(LogTemp,Display,TEXT("%f,%f"),GetActorLocation().X,GetActorLocation().Y)
 	//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
 	const UWorld * world = GetWorld();
 	
-	if (NodeSelector.nodes.Num() != 0) {
+	if (NodeSelector.DynamicNodes.Num() != 0) {
 		FVector current;
 		FVector next;
-		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NodeSelector.nodes[0]->point.X, NodeSelector.nodes[0]->point.Y);
 		
-		for (int i = 1; i < NodeSelector.nodes.Num(); ++i) {
-			Node* parent = NodeSelector.nodes[i]->parent;
-			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
-			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point,FColor::Red, true);
+		for (int i = 1; i < NodeSelector.DynamicNodes.Num(); ++i) {
+			DynamicNode* parent = NodeSelector.DynamicNodes[i]->parent;
+			DrawDebugLine(world, NodeSelector.DynamicNodes[i]->point, parent->point,FColor::Red, true);
 		}
-		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 5.f, 26, FColor::Blue, true);
+		DrawDebugSphere(world, NodeSelector.DynamicNodes[NodeSelector.DynamicNodes.Num() - 1]->point, 1.f, 26, FColor::Blue, true);
 		
-		DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Green, true);
+		DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 1, 26, FColor::Green, true);
 	}
 	//Move that shit
 	
-	NodeSelector.GetRrtPath(path);
+	NodeSelector.GetDynamicRrtPath(path);
 	HasGoalPosition = true;
 	DrawDebugLines();
 	
@@ -207,21 +206,9 @@ void ADynamicPoint::RandomTurn() {
 	SetActorRotation(NewRotation);
 }
 
-void ADynamicPoint::RandomPosition() {
-	float x;
-	float y;
-	this->NodeSelector.RandomPosition(x, y);
-	//UE_LOG(LogTemp,Display, TEXT("X: %f Y: %f"), x, y);
-	path.Add(new Node(FVector(x, y, 0.f)));
-	HasGoalPosition = true;
-	DrawDebugLines();
-}
 
-void ADynamicPoint::GetPath() {
-	NodeSelector.GetPath(path);
-	HasGoalPosition = true;
-	DrawDebugLines();
-}
+
+
 
 
 void ADynamicPoint::MoveToPosition(float x, float y) {

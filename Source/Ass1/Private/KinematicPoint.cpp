@@ -45,11 +45,11 @@ AKinematicPoint::AKinematicPoint()
 	SpringArm->bEnableCameraLag = true;
 	SpringArm->bInheritYaw = 0;
 	SpringArm->CameraLagSpeed = 3.0f;
-	*/
+	
 	// Create a camera and attach to our spring arm
 	UCameraComponent* Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("ActualCamera"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-	
+	*/
 	// Take control of the default player
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
@@ -71,7 +71,7 @@ AKinematicPoint::AKinematicPoint()
 	FVector pos_goal = FVector(0.0f, 0.0f, -40.0f);
 	FVector pos_start = FVector(0.0f, 0.0f, -40.0f);
 
-	m_jsonfileName = "P3";
+	m_jsonfileName = "P1";
 }
 
 // Called when the game starts or when spawned
@@ -91,6 +91,7 @@ void AKinematicPoint::DrawGraph() {
 	location.Z = 0;
 	float x = 10;
 	float y = 15;
+	UE_LOG(LogTemp, Display, TEXT("started rrt"));
 	//NodeSelector.RandomPosition(x, y);
 
 	FVector goal = FVector(x, y, 0.f);
@@ -559,7 +560,7 @@ void AKinematicPoint::RandomPosition() {
 }
 
 void AKinematicPoint::GetPath() {
-	NodeSelector.GetPath(path);
+	//NodeSelector.GetPath(path);
 	HasGoalPosition = true;
 	DrawDebugLines();
 	
