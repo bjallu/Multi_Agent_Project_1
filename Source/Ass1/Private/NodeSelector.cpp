@@ -8,7 +8,7 @@ NodeSelector::NodeSelector()
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 3;
-	NumNodes = 1000;
+	NumNodes = 3000;
 	GoalRadius = 1.f;
 	nodes = TArray<Node*>();
 	obstacles = TArray<Obstacle>();
@@ -221,7 +221,7 @@ void NodeSelector::rrt(FVector EndPosition, FVector StartPosition) {
 			}
 		}
 		FVector NewNode = CalculatePoint(parent->point, rand);
-		NewNode.Z = 70.f;
+		//NewNode.Z = 70.f;
 		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NewNode.X, NewNode.Y);
 
 		nodes.Add(new Node(parent, NewNode));
@@ -270,7 +270,7 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 				}
 			}
 		}
-		NewNode->point.Z = 70.f;
+		//NewNode->point.Z = 70.f;
 		nodes.Add(new Node(parent, NewNode->point, NewNode->orientation));
 		//UE_LOG(LogTemp, Display, TEXT("New Position: %f, %f"), NewNode->point.X, NewNode->point.Y);
 		//UE_LOG(LogTemp, Display, TEXT("New orientat: %f, %f"), NewNode->orientation.X, NewNode->orientation.Y);

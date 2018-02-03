@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "NodeSelector.h"
 #include "GameFramework/Pawn.h"
-#include "DynamicPointMovementComponent.h"
+#include "KinematicPointMovementComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Node.h"
 #include "DifferentialDrive.generated.h"
@@ -17,7 +17,7 @@ class ASS1_API ADifferentialDrive : public APawn
 
 public:
 	// Sets default values for this pawn's properties
-	class UDynamicPointMovementComponent* MovementComponent;
+	class UKinematicPointMovementComponent* MovementComponent;
 	class USpringArmComponent* SpringArm;
 	bool HasGoalPosition = false;
 	FVector GoalPosition;

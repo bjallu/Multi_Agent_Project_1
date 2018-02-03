@@ -46,7 +46,7 @@ ADifferentialDrive::ADifferentialDrive()
 	// Take control of the default player
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
-	MovementComponent = CreateDefaultSubobject<UDynamicPointMovementComponent>(TEXT("CustomMovementComponent"));
+	MovementComponent = CreateDefaultSubobject<UKinematicPointMovementComponent>(TEXT("CustomMovementComponent"));
 	MovementComponent->UpdatedComponent = RootComponent;
 
 }
@@ -72,7 +72,28 @@ void ADifferentialDrive::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	if (HasGoalPosition) {
+		//Calculate path
+		MoveToPosition(path[0]->point.X, path[0]->point.Y);
+		FVector XYLoc = GetActorLocation();
+		XYLoc.Z = 0.f;
+		//path[0].Z = 0.f;
+		//UE_LOG(LogTemp, Display, TEXT("Distance To Goal: %f"), *(XYLoc - GoalPosition).SizeSquared());
+		//Check if GoalPosition is reached
+		if (NodeSelector.PointDistance(XYLoc, path[0]->point) <= 0.1f) {
+			// goal reached, check if path is not empty
+			//UE_LOG(LogTemp, Display, TEXT("Reached node %f, %f"), XYLoc.X, XYLoc.Y);
+			path.RemoveAt(0);
+			if (path.Num() == 0) {
+				HasGoalPosition = false;
+				FlushPersistentDebugLines(GetWorld());
+			}
+
+
+		}
+		else
+			MovementComponent->AddInputVector(GetActorForwardVector());
 	}
+
 }
 
 void ADifferentialDrive::DrawDebugLines() {
@@ -111,8 +132,8 @@ void ADifferentialDrive::DrawGraph() {
 	float x = 10;
 	float y = 15;							// Change to read from json
 	//NodeSelector.RandomPosition(x, y);
-	FVector goal = FVector(x, y, 70.f);
-	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5,70.0), FVector(0.9,-0.2,70.0));
+	FVector goal = FVector(x, y, GetActorLocation().Z);
+	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5, GetActorLocation().Z), FVector(0.9,-0.2, GetActorLocation().Z));
 
 	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
 		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
@@ -128,19 +149,19 @@ void ADifferentialDrive::DrawGraph() {
 		for (int i = 1; i < NodeSelector.nodes.Num(); ++i) {
 			Node* parent = NodeSelector.nodes[i]->parent;
 			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
-			if (NodeSelector.nodes[i]->point.Z == 0.0) {
-				//UE_LOG(LogTemp, Display, TEXT("FOUND 0 IN current"));
-				continue;
-			}
-			if (parent->point.Z == 0.0) {
-				//UE_LOG(LogTemp, Display, TEXT("FOUND 0 IN parent"));
-				continue;
-			}
+			NodeSelector.nodes[i]->point.Z = GetActorLocation().Z+1;
+			
+			parent->point.Z = GetActorLocation().Z + 1;
+			//continue;
+			
+			UE_LOG(LogTemp, Display, TEXT("HEIGHT %f"), NodeSelector.nodes[i]->point.Z);
 			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point, FColor::Red, true);
 		}
-		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 0.1f, 26, FColor::Blue, true);
+		//DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 0.1f, 26, FColor::Blue, true);
 
 	}
+	goal.Z += 1;
+	DrawDebugSphere(world, goal, 0.1f, 26, FColor::Green, true);
 	//Move that shit
 
 	NodeSelector.GetRrtPath(path);
