@@ -71,7 +71,7 @@ AKinematicPoint::AKinematicPoint()
 	FVector vel_start = FVector(0.0f, 0.0f, -40.0f);
 	FVector pos_goal = FVector(0.0f, 0.0f, -40.0f);
 	FVector pos_start = FVector(0.0f, 0.0f, -40.0f);
-
+	map = MapFunctions::MapFunctions();
 	m_jsonfileName = "P2";
 }
 
@@ -83,10 +83,10 @@ void AKinematicPoint::BeginPlay()
 
 	// Create the map 
 	//Obstacle obs = Obstacle::Obstacle();
-	MapFunctions map = MapFunctions::MapFunctions();
-	map.ParseJson("P3");
-	DrawObstacles(map.obstacles);
-	DrawMap(map.bounding_box);
+	//map = MapFunctions::MapFunctions();
+	map.ParseJson("P2");
+	DrawObstacles(map.obstacles, map);
+	DrawMap(map.bounding_box, map);
 
 	// Change to link to da graph and get all initial positiona and speed values from there
 	//if (!m_jsonfileName.IsEmpty())
@@ -165,33 +165,33 @@ void AKinematicPoint::Tick(float DeltaTime)
 }
 
 
-void AKinematicPoint::DrawObstacles(std::vector<Obstacle> obs) {
+void AKinematicPoint::DrawObstacles(std::vector<Obstacle> obs, MapFunctions map) {
 	const UWorld *world = GetWorld();
 	for (int i = 0; i < obs.size(); ++i){
 		Obstacle obstocheck = obs[i];
 		for (int j = 0; j < obstocheck.points.size(); ++j) {
 			// Draw from the last to the first 
 			if(j==(obstocheck.points.size()-1)){
-				DrawDebugLine(world, FVector(obstocheck.points[j][2], obstocheck.points[j][3], GetActorLocation().Z), FVector(obstocheck.points[0][2], obstocheck.points[0][3], GetActorLocation().Z), FColor::Emerald, true);
+				DrawDebugLine(world, FVector(obstocheck.points[j][2], obstocheck.points[j][3], map.z), FVector(obstocheck.points[0][2], obstocheck.points[0][3], map.z), FColor::Emerald, true);
 			}
 			//Otherwise we always draw to the next one
 			else {
-				DrawDebugLine(world, FVector(obstocheck.points[j][2], obstocheck.points[j][3], GetActorLocation().Z), FVector(obstocheck.points[j+1][2], obstocheck.points[j+1][3], GetActorLocation().Z), FColor::Emerald, true);
+				DrawDebugLine(world, FVector(obstocheck.points[j][2], obstocheck.points[j][3], map.z), FVector(obstocheck.points[j+1][2], obstocheck.points[j+1][3], map.z), FColor::Emerald, true);
 			}
 		}
 	}
 }
 
-void AKinematicPoint::DrawMap(Obstacle obs) {
+void AKinematicPoint::DrawMap(Obstacle obs, MapFunctions map) {
 	const UWorld *world = GetWorld();
 	for (int j = 0; j < obs.points.size(); ++j) {
 		// Draw from the last to the first 
 		if (j == (obs.points.size() - 1)) {
-			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], GetActorLocation().Z), FVector(obs.points[0][2], obs.points[0][3], GetActorLocation().Z), FColor::Emerald, true);
+			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], map.z), FVector(obs.points[0][2], obs.points[0][3], map.z), FColor::Emerald, true);
 		}
 		//Otherwise we always draw to the next one
 		else {
-			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], GetActorLocation().Z), FVector(obs.points[j + 1][2], obs.points[j + 1][3], GetActorLocation().Z), FColor::Emerald, true);
+			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], map.z), FVector(obs.points[j + 1][2], obs.points[j + 1][3], map.z), FColor::Emerald, true);
 		}
 	}
 }

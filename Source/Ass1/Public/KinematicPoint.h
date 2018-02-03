@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 #include "Obstacle.h"
 #include <vector>
+#include "MapFunctions.h"
 #include "KinematicPoint.generated.h"
 
 /**
@@ -40,6 +41,7 @@ public:
 	FVector vel_start;
 	FVector pos_goal;
 	FVector pos_start;
+	MapFunctions map;
 
 protected:
 	// Called when the game starts or when spawned
@@ -63,6 +65,6 @@ public:
 	virtual void GetPath();
 	virtual void DrawDebugLines();
 	virtual void DrawGraph();
-	virtual void DrawObstacles(std::vector<Obstacle>);
-	virtual void DrawMap(Obstacle obs);
+	virtual void DrawObstacles(std::vector<Obstacle>, MapFunctions map);
+	virtual void DrawMap(Obstacle obs, MapFunctions map);
 };

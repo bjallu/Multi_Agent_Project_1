@@ -12,6 +12,7 @@ public:
 	// Rest of the obstacles
 	std::vector<Obstacle> obstacles;
 	FString m_jsonfileName;
+	float z;
 	double vehicle_L;
 	double vehicle_a_max;
 	double vehicle_dt;
@@ -39,6 +40,9 @@ public:
 	bool OutsideBoundingBoxCheck(const FVector& pointToCheck);
 	bool ObstacleCollisionCheck(const FVector& pointToCheck);
 	bool CollisionCheck(const FVector&, const Obstacle& obs);
-
+	bool isInside(Obstacle obs, int n, FVector p);
+	bool onSegment(FVector p, FVector q, FVector r);
+	int orientation(FVector p, FVector q, FVector r);
+	bool doIntersect(FVector p1, FVector q1, FVector p2, FVector q2);
 };
 

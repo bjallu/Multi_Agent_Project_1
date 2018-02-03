@@ -10,6 +10,12 @@
 #include <string> 
 #include <list>
 #include <vector>
+#include <iostream>
+#include <algorithm>    // std::max/min
+using namespace std;
+
+// Define Infinite (Using INT_MAX caused overflow problems)
+#define INF 10000
 
 
 MapFunctions::MapFunctions()
@@ -18,21 +24,22 @@ MapFunctions::MapFunctions()
 	Obstacle bounding_box = Obstacle::Obstacle();
 	// Rest of the obstacles
 	std::vector<Obstacle> obstacles;
+	z = 32.0f;
 	// Velocity values
-	double vehicle_L = 0;
-	double vehicle_a_max = 0;
-	double vehicle_dt = 0;
-	double vehicle_omega_max = 0;
-	double vehicle_t = 0;
-	double vehicle_phi_max = 0;
-	double vehicle_v_max = 0;
+	vehicle_L = 0;
+	vehicle_a_max = 0;
+	vehicle_dt = 0;
+	vehicle_omega_max = 0;
+	vehicle_t = 0;
+	vehicle_phi_max = 0;
+	vehicle_v_max = 0;
 	// Positional values
-	FVector vel_goal = FVector(0.0f, 0.0f, -40.0f);
-	FVector vel_start = FVector(0.0f, 0.0f, -40.0f);
-	FVector pos_goal = FVector(0.0f, 0.0f, -40.0f);
-	FVector pos_start = FVector(0.0f, 0.0f, -40.0f);
+	vel_goal = FVector(0.0f, 0.0f, z);
+	vel_start = FVector(0.0f, 0.0f, z);
+	pos_goal = FVector(0.0f, 0.0f, z);
+	pos_start = FVector(0.0f, 0.0f, z);
 	// Global offsets
-	double global_z_offset = -40.0f;
+	double global_z_offset = z;
 	// The file name
 	m_jsonfileName = "P3";
 }
@@ -206,35 +213,137 @@ bool MapFunctions::OutsideBoundingBoxCheck(const FVector& pointToCheck) {
 		return false;
 }
 
+// Returns true if the point p lies inside the polygon[] with n vertices
+bool MapFunctions::isInside(Obstacle obs, int n, FVector p){
+	// There must be at least 3 vertices in polygon[]
+	if (n < 3)  return false;
+
+	// Create a point for line segment from p to infinite
+	//float[] extreme;
+	//extreme = { INF, p.y };
+	FVector extreme = FVector(INF, p.Y, -40.0f);
+
+	// Count intersections of the above line with sides of polygon
+	int count = 0;
+	int i = 0;
+	do
+	{
+		int next = (i + 1) % n;
+
+		std::vector<int> obs_i = obs.points[i];
+		FVector obs__i = FVector(obs_i[2], obs_i[3], -40.0f);
+		std::vector<int> obs_next = obs.points[next];
+		FVector obs__next = FVector(obs_next[2], obs_next[3], -40.0f);
+
+		// Check if the line segment from 'p' to 'extreme' intersects
+		// with the line segment from 'polygon[i]' to 'polygon[next]'
+		if (doIntersect(obs__i, obs__next, p, extreme))
+		{
+			// If the point 'p' is colinear with line segment 'i-next',
+			// then check if it lies on segment. If it lies, return true,
+			// otherwise false
+			if (orientation(obs__i, p, obs__next) == 0)
+				return onSegment(obs__i, p, obs__next);
+
+			count++;
+		}
+		i = next;
+	} while (i != 0);
+
+	// Return true if count is odd, false otherwise
+	return count & 1;  // Same as (count%2 == 1)
+}
+
 bool MapFunctions::ObstacleCollisionCheck(const FVector& pointToCheck) {
 	//std::vector<Obstacle*> obs = this->obstacles;
 	std::vector<Obstacle> obs = obstacles;
-	double testx = pointToCheck.X;
-	double testy = pointToCheck.Y;
 	for (int k = 0; k < obs.size(); ++k) {
+		Obstacle obstocheck = obs[k];
+		int nvert = obstocheck.points.size();
+		if (isInside(obstocheck, nvert, pointToCheck)) {
+			return true;
+		}
+		/*
+		double testx = pointToCheck.X;
+		double testy = pointToCheck.Y;
+		for (int k = 0; k < obs.size(); ++k) {
 		bool inside = false;
 		int i = 0;
 		int j = 0;
 		//Obstacle* obstocheck = obs[k];
 		Obstacle obstocheck = obs[k];
-		//if (pointToCheck.X > obstocheck.minX && pointToCheck.X < obstocheck.maxX && pointToCheck.Y > obstocheck.minY && pointToCheck.Y < obstocheck.maxY) {
-	//		// We're inside the polygon! so we return true
-//			return true;
-//		}
+		if (pointToCheck.X > obstocheck.minX && pointToCheck.X < obstocheck.maxX && pointToCheck.Y > obstocheck.minY && pointToCheck.Y < obstocheck.maxY) {
+		// We're inside the polygon! so we return true
+		return true;
+		}
 		int nvert = obstocheck.points.size();
 		for (i = 0, j = nvert - 1; i < nvert; j = i++) {
-			if (((obstocheck.points[i][3] > testy) != (obstocheck.points[j][3] > testy)) &&
-				(testx < (obstocheck.points[j][2] - obstocheck.points[i][2]) * (testy - obstocheck.points[i][3]) / (obstocheck.points[j][3] - obstocheck.points[i][3]) + obstocheck.points[i][2]))
-				inside = !inside;
+		if (((obstocheck.points[i][3] > testy) != (obstocheck.points[j][3] > testy)) &&
+		(testx < (obstocheck.points[j][2] - obstocheck.points[i][2]) * (testy - obstocheck.points[i][3]) / (obstocheck.points[j][3] - obstocheck.points[i][3]) + obstocheck.points[i][2]))
+		inside = !inside;
 		}
 		UE_LOG(LogTemp, Display, TEXT("%c"), inside);
 		if (inside)return true;
+		}
+		return false;
+		*/
 	}
 	return false;
 }
 
-bool MapFunctions::CollisionCheck(const FVector& pointToCheck, const Obstacle& obs) {
-	return true;
+// Given three colinear points p, q, r, the function checks if
+// point q lies on line segment 'pr'
+bool MapFunctions::onSegment(FVector p, FVector q, FVector r){
+	if (q.X <= max(p.X, r.X) && q.X >= min(p.X, r.X) &&
+		q.Y <= max(p.Y, r.Y) && q.Y >= min(p.Y, r.Y)) {
+		return true;
+	}
+	return false;
+}
+
+// To find orientation of ordered triplet (p, q, r).
+// The function returns following values
+// 0 --> p, q and r are colinear
+// 1 --> Clockwise
+// 2 --> Counterclockwise
+int MapFunctions::orientation(FVector p, FVector q, FVector r)
+{
+	int val = (q.Y - p.Y) * (r.X - q.X) -
+		(q.X - p.X) * (r.Y - q.Y);
+
+	if (val == 0) return 0;  // colinear
+	return (val > 0) ? 1 : 2; // clock or counterclock wise
+}
+
+// The function that returns true if line segment 'p1q1'
+// and 'p2q2' intersect.
+bool MapFunctions::doIntersect(FVector p1, FVector q1, FVector p2, FVector q2)
+{
+	// Find the four orientations needed for general and
+	// special cases
+	int o1 = orientation(p1, q1, p2);
+	int o2 = orientation(p1, q1, q2);
+	int o3 = orientation(p2, q2, p1);
+	int o4 = orientation(p2, q2, q1);
+
+	// General case
+	if (o1 != o2 && o3 != o4)
+		return true;
+
+	// Special Cases
+	// p1, q1 and p2 are colinear and p2 lies on segment p1q1
+	if (o1 == 0 && onSegment(p1, p2, q1)) return true;
+
+	// p1, q1 and p2 are colinear and q2 lies on segment p1q1
+	if (o2 == 0 && onSegment(p1, q2, q1)) return true;
+
+	// p2, q2 and p1 are colinear and p1 lies on segment p2q2
+	if (o3 == 0 && onSegment(p2, p1, q2)) return true;
+
+	// p2, q2 and q1 are colinear and q1 lies on segment p2q2
+	if (o4 == 0 && onSegment(p2, q1, q2)) return true;
+
+	return false; // Doesn't fall in any of the above cases
 }
 
 /*

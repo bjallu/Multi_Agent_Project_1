@@ -54,7 +54,7 @@ public:
 	virtual void DrawDebugLines();
 	virtual void DrawGraph();
 	float CalculateDistanceToGoal(const FVector);
-	virtual void DrawObstacles(std::vector<Obstacle>);
-	virtual void DrawMap(Obstacle obs);
+	virtual void DrawObstacles(std::vector<Obstacle>, MapFunctions map);
+	virtual void DrawMap(Obstacle obs, MapFunctions map);
 	
 };
