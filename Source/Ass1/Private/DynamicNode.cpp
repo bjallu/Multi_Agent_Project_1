@@ -41,6 +41,11 @@ DynamicNode::DynamicNode(DynamicNode parent, FVector point, FVector velocity) {
 	this->Velocity = velocity;
 }
 
+DynamicNode::DynamicNode(DynamicNode* parent, FVector point, FVector velocity) {
+	this->parent = parent;
+	this->point = point;
+	this->Velocity = velocity;
+}
 
 DynamicNode::DynamicNode(FVector point, FVector velocity) {
 	this->point = point;

@@ -24,5 +24,6 @@ public:
 	DynamicNode(DynamicNode parent, FVector point, FVector velocity, FVector acceleration);
 	DynamicNode(DynamicNode parent, FVector point, FVector velocity);
 	DynamicNode(FVector point, FVector velocity);
-	
+	DynamicNode(DynamicNode* parent, FVector point, FVector velocity);
+
 };
