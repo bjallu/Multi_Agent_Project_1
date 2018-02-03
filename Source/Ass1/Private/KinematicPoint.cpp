@@ -84,7 +84,7 @@ void AKinematicPoint::BeginPlay()
 	// Create the map 
 	//Obstacle obs = Obstacle::Obstacle();
 	MapFunctions map = MapFunctions::MapFunctions();
-	map.ParseJson("P2");
+	map.ParseJson("P3");
 	DrawObstacles(map.obstacles);
 	DrawMap(map.bounding_box);
 

@@ -34,7 +34,7 @@ MapFunctions::MapFunctions()
 	// Global offsets
 	double global_z_offset = -40.0f;
 	// The file name
-	m_jsonfileName = "P2";
+	m_jsonfileName = "P3";
 }
 
 void MapFunctions::FindMin(Obstacle& obs, const float& x, const float& y) {
@@ -217,6 +217,10 @@ bool MapFunctions::ObstacleCollisionCheck(const FVector& pointToCheck) {
 		int j = 0;
 		//Obstacle* obstocheck = obs[k];
 		Obstacle obstocheck = obs[k];
+		//if (pointToCheck.X > obstocheck.minX && pointToCheck.X < obstocheck.maxX && pointToCheck.Y > obstocheck.minY && pointToCheck.Y < obstocheck.maxY) {
+	//		// We're inside the polygon! so we return true
+//			return true;
+//		}
 		int nvert = obstocheck.points.size();
 		for (i = 0, j = nvert - 1; i < nvert; j = i++) {
 			if (((obstocheck.points[i][3] > testy) != (obstocheck.points[j][3] > testy)) &&

@@ -58,7 +58,7 @@ void ADifferentialDrive::BeginPlay()
 	Super::BeginPlay();
 
 	// Draw map
-	map.ParseJson("P2");
+	map.ParseJson("P3");
 	DrawObstacles(map.obstacles);
 	DrawMap(map.bounding_box);
 
@@ -136,8 +136,8 @@ void ADifferentialDrive::DrawGraph() {
 	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
 	FVector location = GetActorLocation();
 	location.Z = 0;
-	float x = 30.0f;
-	float y = 20.0f;							// Change to read from json
+	float x = 32.0f;
+	float y = 22.0f;							// Change to read from json
 	const UWorld * world = GetWorld();
 	//NodeSelector.RandomPosition(x, y);
 	DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Red, true);

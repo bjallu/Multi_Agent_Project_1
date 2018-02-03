@@ -8,8 +8,8 @@ NodeSelector::NodeSelector()
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 3;
-	NumNodes = 5000;
-	GoalRadius = 1.f;
+	NumNodes = 10;
+	GoalRadius = 1.0f;
 	nodes = TArray<Node*>();
 	DynamicNodes = TArray<DynamicNode*>();
 	obstacles = TArray<Obstacle>();
@@ -217,7 +217,7 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 					nodeToTest = CalculateDifferentialPoint(*nodes[i], rand);
 					FVector coordinates = nodeToTest->point;
 					if (map.ObstacleCollisionCheck(coordinates)) continue;
-					UE_LOG(LogTemp, Display, TEXT("do we ever get here"));
+					//UE_LOG(LogTemp, Display, TEXT("do we ever get here"));
 					NewNode = CalculateDifferentialPoint(*nodes[i], rand);
 					parent = nodes[i];
 					foundNext = true;
