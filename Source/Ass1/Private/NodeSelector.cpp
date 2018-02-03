@@ -8,7 +8,7 @@ NodeSelector::NodeSelector()
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 3;
-	NumNodes = 1000;
+	NumNodes = 3000;
 	GoalRadius = 1.f;
 	nodes = TArray<Node*>();
 	obstacles = TArray<Obstacle>();
