@@ -432,6 +432,8 @@ TArray<CarNode*> NodeSelector::LSR(std::vector<std::pair<FVector, FVector>>& _LR
 		float delta = (Velocity / VehicleLength)*tan(MaxTurnAngle)*TimeStep;
 		float orientation = acos(GetCosAngle(FVector(1, 0, 0), n1.orientation));
 		orientation = delta + orientation;
+		if (n1.orientation.Y < 0)
+			orientation = -orientation;
 		FVector newOrientation = FVector(cos(orientation), sin(orientation), n1.point.Z);
 		float newX = Velocity * cos(orientation)*TimeStep;
 		float newY = Velocity * sin(orientation)*TimeStep;
@@ -439,6 +441,8 @@ TArray<CarNode*> NodeSelector::LSR(std::vector<std::pair<FVector, FVector>>& _LR
 		next.Add(new CarNode(n1, newPosition, newOrientation));
 		for (int i = 1; i < timesteps; ++i) {
 			orientation = acos(GetCosAngle(FVector(1, 0, 0), next[i-1]->orientation));
+			if (next[i - 1]->orientation.Y < 0)
+				orientation = -orientation;
 			orientation = delta + orientation; //THIS MIGHT BE TURN RIGHT
 			newOrientation = FVector(cos(orientation), sin(orientation), next[i - 1]->point.Z);
 			newX = Velocity * cos(orientation)*TimeStep;
@@ -464,6 +468,8 @@ TArray<CarNode*> NodeSelector::LSR(std::vector<std::pair<FVector, FVector>>& _LR
 		timesteps = arcL3 / (Velocity * TimeStep);
 		delta = (Velocity / VehicleLength)*tan(MaxTurnAngle)*TimeStep;
 		orientation = acos(GetCosAngle(FVector(1, 0, 0), next[next.Num() - 1]->orientation));
+		if (next[next.Num() - 1]->orientation.Y < 0)
+			orientation = -orientation;
 		orientation = delta + orientation;
 		newOrientation = FVector(cos(orientation), sin(orientation), next[next.Num() - 1]->point.Z);
 		newX = Velocity * cos(orientation)*TimeStep;
@@ -472,6 +478,8 @@ TArray<CarNode*> NodeSelector::LSR(std::vector<std::pair<FVector, FVector>>& _LR
 		next.Add(new CarNode(n1, newPosition, newOrientation));
 		for (int i = 1; i < timesteps; ++i) {
 			orientation = acos(GetCosAngle(FVector(1, 0, 0), next[next.Num() - 1]->orientation));
+			if (next[next.Num() - 1]->orientation.Y < 0)
+				orientation = -orientation;
 			orientation = delta - orientation; //THIS MIGHT BE TURN RIGHT
 			newOrientation = FVector(cos(orientation), sin(orientation), next[next.Num() - 1]->point.Z);
 			newX = Velocity * cos(orientation)*TimeStep;
@@ -483,7 +491,7 @@ TArray<CarNode*> NodeSelector::LSR(std::vector<std::pair<FVector, FVector>>& _LR
 	return next;
 }
 
-void NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2) {
+TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2) {
 	float r1 = VehicleLength / tan(MaxTurnAngle);
 	float r2 = r1;
 	FVector cross = FVector::CrossProduct(n1.orientation, FVector(0, 0, 1));
@@ -498,6 +506,8 @@ void NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2) {
 	// Check if collides, check if current orientation is correct get smallest path of those.
 	for (int i = 0; i < next.Num(); ++i) {
 		//check collides
+		if(map.ObstacleCollisionCheck(next[i]))
+
 	}
 
 	
