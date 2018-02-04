@@ -2,6 +2,7 @@
 
 #include "NodeSelector.h"
 #include "MapFunctions.h"
+#include <cmath>
 
 NodeSelector::NodeSelector()
 {
@@ -11,7 +12,7 @@ NodeSelector::NodeSelector()
 //	minY = map.bounding_box.minY;
 	XBound = 30.f;
 	YBound = 30.f;
-	PathSize = 3;
+	PathSize = 1;
 	NumNodes = 5000;
 	//GoalRadius = 1.0f;
 	GoalRadius = 0.3f;
@@ -613,7 +614,7 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, 
 	next.Add(new CarNode(next[next.Num() - 1], n2.point, n2.orientation));
 
 	for (int i = 0; i < next.Num(); ++i) {
-		if ((map.ObstacleCollisionCheck(next[i]->point)) || (!map.OutsideBoundingBoxCheck(next[i]->point))) {
+		if ((map.ObstacleCollisionCheck(next[i]->point)) || (map.OutsideBoundingBoxCheck(next[i]->point))) {
 			next.Empty();
 			break;
 		}
@@ -635,6 +636,41 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, 
 	}
 	//Try next one
 	*/
+	return next;
+
+}
+
+
+TArray<CarNode*> NodeSelector::CalculateInnerTangentPoints(CarNode& n1, CarNode& n2, MapFunctions map) {
+	//New Guide
+	TArray<CarNode*> next;
+	float R = VehicleLength / tan(MaxTurnAngle);
+	FVector cross = FVector::CrossProduct(n1.orientation, FVector(0, 0, 1));
+	cross = (cross / cross.Size())*R;
+	n2.orientation.Z = n1.orientation.Z;
+	FVector cross2 = FVector::CrossProduct(n2.orientation, FVector(0, 0, 1));
+	cross2 = (cross2 / cross2.Size())*R;
+	FVector A = n1.point - (cross);
+	FVector D = n2.point - (cross2);
+	float distance = sqrt(pow((A.X - D.X),2.0) + pow((A.Y - D.Y),2.0));
+	float theta = acos((2*R)/distance);
+	float angleatan2 = atan2(D.Y - A.Y, D.X - A.X);
+	theta += angleatan2;
+	FVector B = FVector(A.X + R * cos(theta), A.Y + R * sin(theta), map.z);
+	FVector C = FVector(A.X + 2*R*cos(theta), A.Y + 2*R*sin(theta), map.z);
+	FVector direction_to_tangent = D-C;
+	FVector tangent = B * direction_to_tangent.Normalize();
+	
+	next.Add(new CarNode(next[next.Num() - 1], n2.point, n2.orientation));
+
+
+
+	for (int i = 0; i < next.Num(); ++i) {
+		if ((map.ObstacleCollisionCheck(next[i]->point)) || (map.OutsideBoundingBoxCheck(next[i]->point))) {
+			next.Empty();
+			break;
+		}
+	}
 	return next;
 
 }
@@ -704,7 +740,7 @@ void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector St
 
 		CarNodes.Add(new CarNode(parent, NewNode->point, NewNode->orientation));
 		//Check dubins path
-		TArray<CarNode*> trivial = CalculateTangentPoints(*NewNode, *GoalNode, map);
+		TArray<CarNode*> trivial = CalculateInnerTangentPoints(*NewNode, *GoalNode, map);
 		
 		UE_LOG(LogTemp, Display, TEXT("NR IN TRIV PATH:%d"), trivial.Num());
 		if (trivial.Num() != 0) {
