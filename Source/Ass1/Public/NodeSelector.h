@@ -9,11 +9,8 @@
 #include "Obstacle.h"
 #include "DrawDebugHelpers.h"
 #include "DynamicNode.h"
-<<<<<<< HEAD
 #include "MapFunctions.h"
-=======
 #include "CarNode.h"
->>>>>>> d5d9e1dc52c6ede63c4db546953d9d4dacaf4a28
 /**
  * 
  */

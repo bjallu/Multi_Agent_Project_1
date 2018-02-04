@@ -9,13 +9,9 @@ NodeSelector::NodeSelector()
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 3;
-<<<<<<< HEAD
 	NumNodes = 50000;
-	GoalRadius = 1.0f;
-=======
-	NumNodes = 3000;
+	//GoalRadius = 1.0f;
 	GoalRadius = 0.3f;
->>>>>>> d5d9e1dc52c6ede63c4db546953d9d4dacaf4a28
 	nodes = TArray<Node*>();
 	CarNodes = TArray<CarNode*>();
 	DynamicNodes = TArray<DynamicNode*>();
