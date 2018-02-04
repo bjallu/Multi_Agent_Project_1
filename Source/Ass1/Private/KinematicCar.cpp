@@ -135,17 +135,18 @@ void AKinematicCar::SetupPlayerInputComponent(UInputComponent* InputComponent)
 
 void AKinematicCar::DrawGraph() {
 	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
+	const UWorld * world = GetWorld();
 	FVector location = GetActorLocation();
 	location.Z = 0;
 	float x = 10;
 	float y = 15;							// Change to read from json
 	//NodeSelector.RandomPosition(x, y);
 	FVector goal = FVector(x, y, map.z);
-	NodeSelector.carRrt(goal, location, FVector(0.5,-0.5, map.z), FVector(0.9,-0.2, map.z), map);
+	NodeSelector.carRrt(goal, location, FVector(0.5,-0.5, map.z), FVector(0.9,-0.2, map.z), map, world);
 
 	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
 		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
-	const UWorld * world = GetWorld();
+	//const UWorld * world = GetWorld();
 	//UE_LOG(LogTemp, Display, TEXT("GREEN NODE: %f,%f"), x, y);
 	//DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Green, true);
 
