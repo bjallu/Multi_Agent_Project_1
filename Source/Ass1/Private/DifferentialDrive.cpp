@@ -50,7 +50,7 @@ ADifferentialDrive::ADifferentialDrive()
 	MovementComponent = CreateDefaultSubobject<UKinematicPointMovementComponent>(TEXT("CustomMovementComponent"));
 	MovementComponent->UpdatedComponent = RootComponent;
 	map = MapFunctions::MapFunctions();
-	NodeSelector = NodeSelector::NodeSelector(map);
+//NodeSelector = NodeSelector::NodeSelector(map);
 }
 
 // Called when the game starts or when spawned
@@ -145,7 +145,7 @@ void ADifferentialDrive::DrawGraph() {
 
 
 	FVector goal = FVector(x, y, map.z);
-	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5,map.z), FVector(0.9,-0.2, map.z));
+	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5,map.z), FVector(0.9,-0.2, map.z),map);
 
 	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
 		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);

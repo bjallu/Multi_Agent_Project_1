@@ -50,7 +50,7 @@ ADynamicPoint::ADynamicPoint()
 	MovementComponent->UpdatedComponent = RootComponent;
 
 	map = MapFunctions::MapFunctions();
-	NodeSelector = NodeSelector::NodeSelector(map);
+//	NodeSelector = NodeSelector::NodeSelector(map);
 }
 
 // Called when the game starts or when spawned

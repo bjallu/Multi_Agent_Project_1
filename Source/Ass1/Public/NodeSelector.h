@@ -41,14 +41,13 @@ public:
 	float minY;
 
 	NodeSelector();
-	NodeSelector(MapFunctions map);
 	~NodeSelector();
 	void GetRrtPath(TArray<Node*>& vectors);
 	void RandomPosition(float&, float&);
 	void rrt(FVector, FVector);
 	FVector CalculatePoint(const FVector&, const FVector&);
 	float PointDistance(const FVector&, const FVector&);
-	void differentialRrt(const FVector, const FVector, const FVector, const FVector);
+	void differentialRrt(const FVector, const FVector, const FVector, const FVector, MapFunctions map);
 	Node* CalculateDifferentialPoint(const Node& , const FVector&);
 	float DifferentialDriveDistance(const Node&, const FVector&);
 	float GetGoalOrientation(const FVector &, const FVector&);
@@ -57,7 +56,7 @@ public:
 	void GetDynamicRrtPath(TArray<DynamicNode*>&);
 	void getCarRrtPath(TArray<CarNode*>&);
 	DynamicNode* CalculateDynamicPointNode(const DynamicNode&, FVector);
-	void carRrt(FVector EndPosition, FVector StartPosition, FVector StartVelocity, FVector EndVelocity);
+	void carRrt(FVector EndPosition, FVector StartPosition, FVector StartVelocity, FVector EndVelocity, MapFunctions map);
 	CarNode* CalculateCarNode(const CarNode&n1, const FVector n2);
 	CarNode* GetDubinsPath(const CarNode&n1, const CarNode&n2);
 	TArray<CarNode*> CalculateTangentPoints(CarNode& n1, CarNode& n2);

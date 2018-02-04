@@ -8,7 +8,7 @@
 #include "ConstructorHelpers.h"
 #include "GameFramework/Pawn.h"
 #include "Classes/Components/StaticMeshComponent.h"
-
+#include "MapFunctions.h"
 
 // Sets default values
 AKinematicCar::AKinematicCar()
@@ -50,13 +50,19 @@ AKinematicCar::AKinematicCar()
 	MovementComponent->UpdatedComponent = RootComponent;
 
 	map = MapFunctions::MapFunctions();
-	NodeSelector = NodeSelector::NodeSelector(map);
 }
 
 // Called when the game starts or when spawned
 void AKinematicCar::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Draw map
+	map.ParseJson("P1");
+	DrawObstacles(map.obstacles, map);
+	DrawMap(map.bounding_box, map);
+	//NodeSelector = NodeSelector::NodeSelector(map);
+
 
 }
 
@@ -105,8 +111,8 @@ void AKinematicCar::DrawDebugLines() {
 		FVector next;
 		DrawDebugLine(world, GetActorLocation(), FVector(path[0]->point.X, path[0]->point.Y, GetActorLocation().Z), FColor::Emerald, true);
 		for (int i = 0; i < path.Num() - 1; ++i) {
-			current = FVector(path[i]->point.X, path[i]->point.Y, GetActorLocation().Z);
-			next = FVector(path[i + 1]->point.X, path[i + 1]->point.Y, GetActorLocation().Z);
+			current = FVector(path[i]->point.X, path[i]->point.Y, map.z);
+			next = FVector(path[i + 1]->point.X, path[i + 1]->point.Y, map.z);
 			DrawDebugLine(world, current, next, FColor::Emerald, true);
 		}
 	}
@@ -134,8 +140,8 @@ void AKinematicCar::DrawGraph() {
 	float x = 10;
 	float y = 15;							// Change to read from json
 	//NodeSelector.RandomPosition(x, y);
-	FVector goal = FVector(x, y, GetActorLocation().Z);
-	NodeSelector.carRrt(goal, location, FVector(0.5,-0.5, GetActorLocation().Z), FVector(0.9,-0.2, GetActorLocation().Z));
+	FVector goal = FVector(x, y, map.z);
+	NodeSelector.carRrt(goal, location, FVector(0.5,-0.5, map.z), FVector(0.9,-0.2, map.z), map);
 
 	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
 		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
@@ -151,9 +157,9 @@ void AKinematicCar::DrawGraph() {
 		for (int i = 1; i < NodeSelector.CarNodes.Num(); ++i) {
 			CarNode* parent = NodeSelector.CarNodes[i]->parent;
 			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
-			NodeSelector.CarNodes[i]->point.Z = GetActorLocation().Z+1;
+			NodeSelector.CarNodes[i]->point.Z = map.z;
 			
-			parent->point.Z = GetActorLocation().Z + 1;
+			parent->point.Z =map.z;
 			//continue;
 			
 			//UE_LOG(LogTemp, Display, TEXT("HEIGHT %f"), NodeSelector.CarNodes[i]->point.Z);
@@ -162,7 +168,7 @@ void AKinematicCar::DrawGraph() {
 		//DrawDebugSphere(world, NodeSelector.CarNodes[NodeSelector.CarNodes.Num() - 1]->point, 0.1f, 26, FColor::Blue, true);
 
 	}
-	goal.Z += 1;
+	goal.Z = map.z;
 	DrawDebugSphere(world, goal, 0.1f, 26, FColor::Green, true);
 	//Move that shit
 
@@ -240,4 +246,36 @@ void AKinematicCar::MoveToPosition(float x, float y) {
 	FRotator Rotation = FRotationMatrix::MakeFromX(Forward).Rotator();
 	SetActorRotation(Rotation);
 
+}
+
+
+void AKinematicCar::DrawObstacles(std::vector<Obstacle> obs, MapFunctions map) {
+	const UWorld *world = GetWorld();
+	for (int i = 0; i < obs.size(); ++i) {
+		Obstacle obstocheck = obs[i];
+		for (int j = 0; j < obstocheck.points.size(); ++j) {
+			// Draw from the last to the first 
+			if (j == (obstocheck.points.size() - 1)) {
+				DrawDebugLine(world, FVector(obstocheck.points[j][2], obstocheck.points[j][3], map.z), FVector(obstocheck.points[0][2], obstocheck.points[0][3], map.z), FColor::Emerald, true);
+			}
+			//Otherwise we always draw to the next one
+			else {
+				DrawDebugLine(world, FVector(obstocheck.points[j][2], obstocheck.points[j][3], map.z), FVector(obstocheck.points[j + 1][2], obstocheck.points[j + 1][3], map.z), FColor::Emerald, true);
+			}
+		}
+	}
+}
+
+void AKinematicCar::DrawMap(Obstacle obs, MapFunctions map) {
+	const UWorld *world = GetWorld();
+	for (int j = 0; j < obs.points.size(); ++j) {
+		// Draw from the last to the first 
+		if (j == (obs.points.size() - 1)) {
+			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], map.z), FVector(obs.points[0][2], obs.points[0][3], map.z), FColor::Emerald, true);
+		}
+		//Otherwise we always draw to the next one
+		else {
+			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], map.z), FVector(obs.points[j + 1][2], obs.points[j + 1][3], map.z), FColor::Emerald, true);
+		}
+	}
 }

@@ -3,19 +3,16 @@
 #include "NodeSelector.h"
 #include "MapFunctions.h"
 
-
-NodeSelector::NodeSelector(MapFunctions map2)
+NodeSelector::NodeSelector()
 {
-	//this->map = map;
-	map = map2;
-	maxX = map.bounding_box.maxX;
-	minX = map.bounding_box.minX;
-	maxY = map.bounding_box.maxY;
-	minY = map.bounding_box.minY;
+	//maxX = map.bounding_box.maxX;
+//	minX = map.bounding_box.minX;
+//	maxY = map.bounding_box.maxY;
+//	minY = map.bounding_box.minY;
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 3;
-	NumNodes = 50000;
+	NumNodes = 1000;
 	//GoalRadius = 1.0f;
 	GoalRadius = 0.3f;
 	nodes = TArray<Node*>();
@@ -204,7 +201,7 @@ Node* NodeSelector::CalculateDifferentialPoint(const Node& n1, const FVector& n2
 	return new Node(n1, newPosition, newOrientation);
 }
 
-void NodeSelector::differentialRrt(const FVector EndPosition, const FVector StartPosition, FVector startOrientation, FVector EndOrientation) {
+void NodeSelector::differentialRrt(const FVector EndPosition, const FVector StartPosition, FVector startOrientation, FVector EndOrientation, MapFunctions map) {
 	nodes.Empty();
 	//Create startnode
 	Node* StartNode = new Node(StartPosition, startOrientation);
@@ -216,6 +213,11 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 	FVector rand = FVector(x, y, StartPosition.Z);
 	Node* parent = nodes[0];
 	Node* NewNode = parent;
+
+	float minX = map.bounding_box.minX;
+	float maxX = map.bounding_box.maxX;
+	float minY = map.bounding_box.minY;
+	float maxY = map.bounding_box.maxY;
 
 	while (count < NumNodes) {
 		foundNext = false;
@@ -524,11 +526,13 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2) 
 	// Check if collides, check if current orientation is correct get smallest path of those.
 	for (int i = 0; i < next.Num(); ++i) {
 		//check collides
-		if (!map.ObstacleCollisionCheck(next[i]->point))
+		if (!map.ObstacleCollisionCheck(next[i]->point)) {
+			next.Empty();
 			continue;
+		}			
 	}
+	//Try next one
 
-	
 	return next;
 
 }
@@ -537,18 +541,16 @@ CarNode* NodeSelector::GetDubinsPath(const CarNode&n1, const CarNode&n2) {
 	float r1 = VehicleLength/tan(MaxTurnAngle);
 	float r2 = r1;
 	
-	
-	
-	
-
 
 	return new CarNode(n1);
 }
 
 
-void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector StartOrientation, FVector EndOrientation) {
+void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector StartOrientation, FVector EndOrientation, MapFunctions map) {
 	CarNodes.Empty();
+	UE_LOG(LogTemp, Display, TEXT("Sampling goal node"));
 	//Create startnode
+	CarNode* GoalNode = new CarNode(EndPosition, EndOrientation);
 	CarNode* StartNode = new CarNode(StartPosition, StartOrientation);
 	CarNodes.Add(StartNode);
 	int count = 0;
@@ -558,31 +560,56 @@ void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector St
 	FVector rand = FVector(x, y, StartPosition.Z);
 	CarNode* parent = CarNodes[0];
 	CarNode* NewNode = parent;
+
+	float minX = map.bounding_box.minX;
+	float maxX = map.bounding_box.maxX;
+	float minY = map.bounding_box.minY;
+	float maxY = map.bounding_box.maxY;
+
+	UE_LOG(LogTemp, Display, TEXT("Sampling goal node"));
 	while (count < NumNodes) {
 		//Check if there is a straight line to the target from the current position
+		UE_LOG(LogTemp, Display, TEXT("Sampling  node"));
 		foundNext = false;
 		while (!foundNext) {
-			rand.X = FMath::RandRange(-XBound, XBound);
-			rand.Y = FMath::RandRange(-YBound, YBound);
+			UE_LOG(LogTemp, Display, TEXT("Sampling  node"));
+			rand.X = FMath::RandRange(minX, maxX);
+			rand.Y = FMath::RandRange(minY, maxY);
+			// First check if its in bounding box if it is continue
+			if (map.OutsideBoundingBoxCheck(rand)) continue;
 			if (count % 20 == 0) {
 				rand.X = EndPosition.X;
 				rand.Y = EndPosition.Y;
 
-				//UE_LOG(LogTemp, Display, TEXT("Sampling goal node"));
+				UE_LOG(LogTemp, Display, TEXT("Sampling goal node"));
 			}
+			UE_LOG(LogTemp, Display, TEXT("Sampling  node"));
 			for (int i = 0; i < CarNodes.Num(); ++i) {
 				if (PointDistance(CarNodes[i]->point, rand) <= PointDistance(parent->point, rand)) {
-					NewNode = CalculateCarNode(*CarNodes[i], rand);
-					parent = CarNodes[i];
-					foundNext = true;
+					CarNode *nodeToTest;
+					nodeToTest = CalculateCarNode(*CarNodes[i], rand);
+					FVector coordinates = nodeToTest->point;
+					if (!map.ObstacleCollisionCheck(coordinates)) {
+						UE_LOG(LogTemp, Display, TEXT("count: %d"), count);
+						NewNode = CalculateCarNode(*CarNodes[i], rand);
+						parent = CarNodes[i];
+						foundNext = true;
+					}
 				}
 			}
 		}
-		//NewNode.Z = 70.f;
-		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NewNode.X, NewNode.Y);
+
 
 		CarNodes.Add(new CarNode(parent, NewNode->point, NewNode->orientation));
-
+		//Check dubins path
+		TArray<CarNode*> trivial = CalculateTangentPoints(*NewNode, *GoalNode);
+		/*
+		if (trivial.Num() != 0) {
+			trivial[0]->parent = CarNodes[CarNodes.Num() - 1];
+			CarNodes.Append(trivial);
+			return;
+		}*/
+			
 		if (PointDistance(NewNode->point, EndPosition)<GoalRadius) {
 			CarNodes.Add(new CarNode(parent, EndPosition, EndOrientation));
 			UE_LOG(LogTemp, Display, TEXT("FOUND GOAL"));
@@ -591,6 +618,7 @@ void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector St
 		//Draw debug line
 		count++;
 	}
-	UE_LOG(LogTemp, Display, TEXT("nr of nodes: %d"), CarNodes.Num());
+	//UE_LOG(LogTemp, Display, TEXT("nr of nodes: %d"), CarNodes.Num());
 	//UE_LOG(LogTemp, Display, TEXT("Node 2 point: %f, %f"), DynamicNodes[2]->point.X, DynamicNodes[2]->point.Y);
 }
+
