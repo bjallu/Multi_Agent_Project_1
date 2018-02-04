@@ -526,7 +526,7 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, 
 	UE_LOG(LogTemp, Display, TEXT("toRight: %f, %f"), toRight.X, toRight.Y);
 
 	FVector bottomToTop = toRight - fromRight; //tangent line
-	//bottomToTop.Z = 0;
+	bottomToTop.Z = 0;
 	FVector directionToOuter = FVector::CrossProduct(bottomToTop, FVector(0.0, 0.0, 1.0));
 	directionToOuter = (directionToOuter / directionToOuter.Size()) * r1;
 	FVector fromTangent = fromRight + directionToOuter;

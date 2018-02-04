@@ -158,7 +158,7 @@ void AKinematicCar::DrawGraph() {
 			CarNode* parent = NodeSelector.CarNodes[i]->parent;
 			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
 			NodeSelector.CarNodes[i]->point.Z = map.z;
-			
+			//UE_LOG(LogTemp, Display, TEXT("I:%d"), i);
 			parent->point.Z =map.z;
 			//continue;
 			
