@@ -8,6 +8,7 @@
 #include "KinematicPointMovementComponent.h"
 #include "DrawDebugHelpers.h"
 #include "CarNode.h"
+#include "MapFunctions.h"
 #include "KinematicCar.generated.h"
 /**/
 UCLASS()
@@ -19,6 +20,7 @@ public:
 	// Sets default values for this pawn's properties
 	class UKinematicPointMovementComponent* MovementComponent;
 	class USpringArmComponent* SpringArm;
+	MapFunctions map;
 	bool HasGoalPosition = false;
 	FVector GoalPosition;
 	NodeSelector NodeSelector;

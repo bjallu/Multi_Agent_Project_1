@@ -49,6 +49,8 @@ AKinematicCar::AKinematicCar()
 	MovementComponent = CreateDefaultSubobject<UKinematicPointMovementComponent>(TEXT("CustomMovementComponent"));
 	MovementComponent->UpdatedComponent = RootComponent;
 
+	map = MapFunctions::MapFunctions();
+	NodeSelector = NodeSelector::NodeSelector(map);
 }
 
 // Called when the game starts or when spawned

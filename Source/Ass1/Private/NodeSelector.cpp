@@ -4,8 +4,14 @@
 #include "MapFunctions.h"
 
 
-NodeSelector::NodeSelector()
+NodeSelector::NodeSelector(MapFunctions map2)
 {
+	//this->map = map;
+	map = map2;
+	maxX = map.bounding_box.maxX;
+	minX = map.bounding_box.minX;
+	maxY = map.bounding_box.maxY;
+	minY = map.bounding_box.minY;
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 3;
@@ -198,7 +204,7 @@ Node* NodeSelector::CalculateDifferentialPoint(const Node& n1, const FVector& n2
 	return new Node(n1, newPosition, newOrientation);
 }
 
-void NodeSelector::differentialRrt(const FVector EndPosition, const FVector StartPosition, FVector startOrientation, FVector EndOrientation, MapFunctions map) {
+void NodeSelector::differentialRrt(const FVector EndPosition, const FVector StartPosition, FVector startOrientation, FVector EndOrientation) {
 	nodes.Empty();
 	//Create startnode
 	Node* StartNode = new Node(StartPosition, startOrientation);
@@ -210,10 +216,7 @@ void NodeSelector::differentialRrt(const FVector EndPosition, const FVector Star
 	FVector rand = FVector(x, y, StartPosition.Z);
 	Node* parent = nodes[0];
 	Node* NewNode = parent;
-	float maxX = map.bounding_box.maxX;
-	float minX = map.bounding_box.minX;
-	float maxY = map.bounding_box.maxY;
-	float minY = map.bounding_box.minY;
+
 	while (count < NumNodes) {
 		foundNext = false;
 		while (!foundNext) {
@@ -521,12 +524,12 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2) 
 	// Check if collides, check if current orientation is correct get smallest path of those.
 	for (int i = 0; i < next.Num(); ++i) {
 		//check collides
-		if(map.ObstacleCollisionCheck(next[i]))
-
+		if (!map.ObstacleCollisionCheck(next[i]->point))
+			continue;
 	}
 
 	
-
+	return next;
 
 }
 

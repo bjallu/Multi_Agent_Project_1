@@ -58,7 +58,6 @@ AKinematicPoint::AKinematicPoint()
 	MovementComponent->UpdatedComponent = RootComponent;
 
 	//Create the NodeSelector. Used to create the graph.
-	NodeSelector = NodeSelector::NodeSelector();
 
 	double vehicle_L = 0;
 	double vehicle_a_max = 0;
@@ -73,6 +72,7 @@ AKinematicPoint::AKinematicPoint()
 	FVector pos_start = FVector(0.0f, 0.0f, -40.0f);
 	map = MapFunctions::MapFunctions();
 	m_jsonfileName = "P2";
+	NodeSelector = NodeSelector::NodeSelector(map);
 }
 
 // Called when the game starts or when spawned

@@ -17,6 +17,7 @@
 class ASS1_API NodeSelector
 {
 public:
+	MapFunctions map;
 	float XBound;
 	float YBound;
 	float PathSize;
@@ -34,15 +35,20 @@ public:
 	float MaxTurnSpeed;
 	float MaxTurnAngle;
 	FVector GoalVelocity;
+	float maxX;
+	float minX;
+	float maxY;
+	float minY;
 
 	NodeSelector();
+	NodeSelector(MapFunctions map);
 	~NodeSelector();
 	void GetRrtPath(TArray<Node*>& vectors);
 	void RandomPosition(float&, float&);
 	void rrt(FVector, FVector);
 	FVector CalculatePoint(const FVector&, const FVector&);
 	float PointDistance(const FVector&, const FVector&);
-	void differentialRrt(const FVector, const FVector, const FVector, const FVector, const MapFunctions map);
+	void differentialRrt(const FVector, const FVector, const FVector, const FVector);
 	Node* CalculateDifferentialPoint(const Node& , const FVector&);
 	float DifferentialDriveDistance(const Node&, const FVector&);
 	float GetGoalOrientation(const FVector &, const FVector&);
@@ -58,7 +64,5 @@ public:
 	std::vector<std::pair<FVector, FVector>>  TangentLines(FVector c1, FVector c2, float radc1, float radc2);
 	float ArcLength(FVector center, FVector left, FVector right, float radius, bool isleft);
 	TArray<CarNode*> LSR(std::vector<std::pair<FVector, FVector>>& _LRTangents, const FVector agentleft, float radleft, const FVector goalright, float radright, FVector currPos, FVector goalPos,const CarNode&n1);
-
-
 
 };

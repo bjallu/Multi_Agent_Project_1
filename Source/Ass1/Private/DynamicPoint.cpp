@@ -48,7 +48,9 @@ ADynamicPoint::ADynamicPoint()
 
 	MovementComponent = CreateDefaultSubobject<UDynamicPointMovementComponent>(TEXT("CustomMovementComponent"));
 	MovementComponent->UpdatedComponent = RootComponent;
-	
+
+	map = MapFunctions::MapFunctions();
+	NodeSelector = NodeSelector::NodeSelector(map);
 }
 
 // Called when the game starts or when spawned

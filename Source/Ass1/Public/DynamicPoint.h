@@ -6,7 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "DynamicPointMovementComponent.h"
 #include "DrawDebugHelpers.h"
-
+#include "MapFunctions.h"
 #include "DynamicPoint.generated.h"
 
 
@@ -26,6 +26,7 @@ public:
 	bool HasGoalPosition = false;
 	FVector GoalPosition;
 	NodeSelector NodeSelector;
+	MapFunctions map;
 	TArray<DynamicNode*> path;
 	ADynamicPoint();
 
