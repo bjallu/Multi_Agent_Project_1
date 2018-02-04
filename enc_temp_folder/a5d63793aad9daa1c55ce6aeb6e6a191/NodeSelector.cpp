@@ -2,6 +2,7 @@
 
 #include "NodeSelector.h"
 #include "MapFunctions.h"
+#include <cmath>
 
 NodeSelector::NodeSelector()
 {
@@ -11,7 +12,7 @@ NodeSelector::NodeSelector()
 //	minY = map.bounding_box.minY;
 	XBound = 30.f;
 	YBound = 30.f;
-	PathSize = 3;
+	PathSize = 1;
 	NumNodes = 5000;
 	//GoalRadius = 1.0f;
 	GoalRadius = 0.3f;
@@ -521,19 +522,23 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, 
 	float R = VehicleLength / tan(MaxTurnAngle);
 	FVector cross = FVector::CrossProduct(n1.orientation, FVector(0, 0, 1));
 	cross = (cross / cross.Size())*R;
+	n2.orientation.Z = n1.orientation.Z;
 	FVector cross2 = FVector::CrossProduct(n2.orientation, FVector(0, 0, 1));
-	cross2 = (cross2 / cross.Size())*R;
+	cross2 = (cross2 / cross2.Size())*R;
+
+
 	FVector A = n1.point + (cross);
 	FVector D = n2.point + (cross2);
-	DrawDebugCircle(world, A, R, 26, FColor::Blue, true);
-	DrawDebugCircle(world, D, R, 26, FColor::Blue, true);
-
+	A.Z = D.Z;
+	//DrawDebugSphere(world, A, 0.5, 26, FColor::Blue, true);
+	//DrawDebugSphere(world, D, 0.5, 26, FColor::Blue, true);
 	float theta = PI / 2;
 	float angleatan2 = atan2(D.Y - A.Y, D.X - A.X);
 	theta += angleatan2;
 	FVector B = FVector(A.X + R * cos(theta), A.Y + R * sin(theta), 0.0f);
 	FVector C = B + (D - A);
 	FVector tangent = D - A;
+	
 	//LSL
 	float arcl = ArcLength(A,n1.point,B,R,false);
 	float timesteps = ceil(arcl / (Velocity * TimeStep));
@@ -542,7 +547,7 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, 
 	float orientation = acos(GetCosAngle(FVector(1, 0, 0), n1.orientation));
 	if (n1.orientation.Y < 0)
 		orientation = -orientation;
-	orientation = delta + orientation; //plus delta cus turning right
+	orientation = -delta + orientation; //plus delta cus turning right
 	FVector newOrientation = FVector(cos(orientation), sin(orientation), n1.point.Z);
 	float newX = Velocity * cos(orientation)*TimeStep;
 	float newY = Velocity * sin(orientation)*TimeStep;
@@ -552,7 +557,7 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, 
 		orientation = acos(GetCosAngle(FVector(1, 0, 0), next[i - 1]->orientation));
 		if (next[i - 1]->orientation.Y < 0)
 			orientation = -orientation;
-		orientation = delta + orientation; //THIS MIGHT BE TURN RIGHT
+		orientation = -delta + orientation; //THIS MIGHT BE TURN RIGHT
 		newOrientation = FVector(cos(orientation), sin(orientation), next[i - 1]->point.Z);
 		newX = Velocity * cos(orientation)*TimeStep;
 		newY = Velocity * sin(orientation)*TimeStep;
@@ -580,13 +585,13 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, 
 	next.Add(new CarNode(next[next.Num() - 1], C, tangent / tangent.Size()));
 
 	//GO LEFT
-	float arcL3 = ArcLength(D, n2.point, C, R, false);
+	float arcL3 = ArcLength(D, n2.point, C, R, true);
 	timesteps = ceil(arcL3 / (Velocity * TimeStep));
 	delta = (Velocity / VehicleLength)*tan(MaxTurnAngle)*TimeStep;
 	orientation = acos(GetCosAngle(FVector(1, 0, 0), next[next.Num() - 1]->orientation));
 	if (next[next.Num() - 1]->orientation.Y < 0)
 		orientation = -orientation;
-	orientation = delta + orientation;
+	orientation = -delta + orientation;
 	newOrientation = FVector(cos(orientation), sin(orientation), next[next.Num() - 1]->point.Z);
 	newX = Velocity * cos(orientation)*TimeStep;
 	newY = Velocity * sin(orientation)*TimeStep;
@@ -596,34 +601,34 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, 
 		orientation = acos(GetCosAngle(FVector(1, 0, 0), next[next.Num() - 1]->orientation));
 		if (next[next.Num() - 1]->orientation.Y < 0)
 			orientation = -orientation;
-		orientation = delta + orientation; //THIS MIGHT BE TURN RIGHT
+		orientation = -delta + orientation; //THIS MIGHT BE TURN RIGHT
 		newOrientation = FVector(cos(orientation), sin(orientation), next[next.Num() - 1]->point.Z);
 		newX = Velocity * cos(orientation)*TimeStep;
 		newY = Velocity * sin(orientation)*TimeStep;
 		newPosition = FVector(next[next.Num() - 1]->point.X + newX, next[next.Num() - 1]->point.Y + newY, next[next.Num() - 1]->point.Z);
 		next.Add(new CarNode(next[next.Num() - 1], newPosition, newOrientation));
 	}
-	next.Add(new CarNode(next[next.Num() - 1], n2.point, n2.orientation));
+	//next.Add(new CarNode(next[next.Num() - 1], n2.point, n2.orientation));
 
 	for (int i = 0; i < next.Num(); ++i) {
-		if (map.ObstacleCollisionCheck(next[i]->point) || map.OutsideBoundingBoxCheck(next[i]->point)) {
+		if ((map.ObstacleCollisionCheck(next[i]->point)) || (map.OutsideBoundingBoxCheck(next[i]->point))) {
 			next.Empty();
 			break;
 		}
 	}
 	shortest = next;
+	A = n1.point - (cross);
+	D = n2.point - (cross2);
+	A.Z = D.Z;
 
-
-
-	A = n1.point + (cross);
-	D = n2.point + (cross2);
 	theta = (PI / 2)+ PI;
 	angleatan2 = atan2(D.Y - A.Y, D.X - A.X);
 	theta += angleatan2;
 	B = FVector(A.X + R * cos(theta), A.Y + R * sin(theta), 0.0f);
 	C = B + (D - A);
+	tangent = D - A;
 	//RSR	
-	arcl = ArcLength(A, n1.point, B, R, false);
+	arcl = ArcLength(A, n1.point, B, R, true);
 	orientation = acos(GetCosAngle(FVector(1, 0, 0), n1.orientation));
 	if (n1.orientation.Y < 0)
 		orientation = -orientation;
@@ -700,11 +705,242 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, 
 	UE_LOG(LogTemp, Display, TEXT("RSR SHORTEST PATH:%d"), next.Num());
 	
 	if (shortest.Num() > next.Num() && next.Num() != 0) {
-		//shortest = next;
+		shortest = next;
 	}
+	
 	
 
 	return shortest;
+
+}
+
+
+
+
+TArray<CarNode*> NodeSelector::LR(CarNode& n1, CarNode& n2, MapFunctions map, const UWorld* world) {
+	//Right Straight Left
+	float sign = 1;
+	//if (leftFirst) sign = 1;
+	TArray<CarNode*> next;
+	TArray<CarNode*> shortest;
+	float R = VehicleLength / tan(MaxTurnAngle);
+	FVector cross = FVector::CrossProduct(n1.orientation, FVector(0, 0, 1));
+	cross = (cross / cross.Size())*R;
+	n2.orientation.Z = n1.orientation.Z;
+	FVector cross2 = FVector::CrossProduct(n2.orientation, FVector(0, 0, 1));
+	cross2 = (cross2 / cross2.Size())*R;
+	FVector A = n1.point + (cross);
+	FVector D = n2.point - (cross2);
+	float delta = (Velocity / VehicleLength)*tan(MaxTurnAngle)*TimeStep;
+	A.Z = D.Z;
+	FVector d = D - A;
+	float theta = acos((2*R)/d.Size());
+	float angleatan2 = atan2(D.Y - A.Y, D.X - A.X);
+	theta += angleatan2;
+	FVector B = FVector(A.X + R * cos(theta), A.Y + R * sin(theta), 0.0f);
+	FVector C = FVector(A.X + 2*R*cos(theta), A.Y + 2*R*sin(theta), 0.0f);
+	FVector direction_to_tangent = D-C;
+	float distance2 = sqrt(pow((D.X - C.X), 2.0) + pow((D.Y - C.Y), 2.0));
+	FVector E = B + direction_to_tangent;
+	FVector tangent = E - B;//E + distance2;
+	//FVector tangent = direction_to_tangent;
+
+	//B.Z = map.z;
+	//DrawDebugSphere(world, D, 0.5, 26, FColor::Blue, true);
+	//DrawDebugSphere(world, A, 0.5, 26, FColor::Blue, true);
+	//DrawDebugSphere(world, E, 0.3, 26, FColor::Green, true);
+	//DrawDebugSphere(world, B, 0.3, 26, FColor::Red, true);
+
+
+	//DrawDebugSphere(world, tangent, 0.3, 26, FColor::Black, true);
+	float arcl = ArcLength(A, n1.point, B, R, false);
+	float timesteps = ceil(arcl / (Velocity * TimeStep));
+	float orientation = acos(GetCosAngle(FVector(1, 0, 0), n1.orientation));
+	if (n1.orientation.Y < 0)
+		orientation = -orientation;
+	orientation = -delta + orientation; //plus delta cus turning right
+	FVector newOrientation = FVector(cos(orientation), sin(orientation), n1.point.Z);
+	float newX = Velocity * cos(orientation)*TimeStep;
+	float newY = Velocity * sin(orientation)*TimeStep;
+	FVector newPosition = FVector(n1.point.X + newX, n1.point.Y + newY, n1.point.Z);
+	next.Add(new CarNode(n1, newPosition, newOrientation));
+	for (int i = 1; i < timesteps; ++i) {
+		orientation = acos(GetCosAngle(FVector(1, 0, 0), next[i - 1]->orientation));
+		if (next[i - 1]->orientation.Y < 0)
+			orientation = -orientation;
+		orientation = -delta + orientation; //THIS MIGHT BE TURN RIGHT
+		newOrientation = FVector(cos(orientation), sin(orientation), next[i - 1]->point.Z);
+		newX = Velocity * cos(orientation)*TimeStep;
+		newY = Velocity * sin(orientation)*TimeStep;
+		newPosition = FVector(next[i - 1]->point.X + newX, next[i - 1]->point.Y + newY, next[i - 1]->point.Z);
+		next.Add(new CarNode(next[i - 1], newPosition, newOrientation));
+	}
+	next.Add(new CarNode(next[next.Num() - 1], B, tangent / tangent.Size()));
+	orientation = acos(GetCosAngle(FVector(1, 0, 0), tangent / tangent.Size()));
+	if (tangent.Y < 0)
+		orientation = -orientation;
+	float arcL2 = sqrt(pow(tangent.X, 2) + pow(tangent.Y, 2));
+	UE_LOG(LogTemp, Display, TEXT("Arcl2: %f"), arcL2);
+
+	timesteps = ceil(arcL2 / (Velocity * TimeStep));
+	newX = Velocity * cos(orientation)*TimeStep;
+	newY = Velocity * sin(orientation)*TimeStep;
+	newPosition = FVector(next[next.Num() - 1]->point.X + newX, next[next.Num() - 1]->point.Y + newY, next[next.Num() - 1]->point.Z);
+	next.Add(new CarNode(next[next.Num() - 1], newPosition, tangent / tangent.Size()));
+	for (int i = 1; i < timesteps; ++i) {
+		newX = Velocity * cos(orientation)*TimeStep;
+		newY = Velocity * sin(orientation)*TimeStep;
+		newPosition = FVector(next[next.Num() - 1]->point.X + newX, next[next.Num() - 1]->point.Y + newY, next[next.Num() - 1]->point.Z);
+		next.Add(new CarNode(next[next.Num() - 1], newPosition, tangent / tangent.Size()));
+	}
+	next.Add(new CarNode(next[next.Num() - 1], E, tangent / tangent.Size()));
+	// TURN LEFT
+	//GO LEFT
+	float arcL3 = ArcLength(D, n2.point, E, R, false);
+	timesteps = ceil(arcL3 / (Velocity * TimeStep));
+	delta = (Velocity / VehicleLength)*tan(MaxTurnAngle)*TimeStep;
+	orientation = acos(GetCosAngle(FVector(1, 0, 0), next[next.Num() - 1]->orientation));
+	if (next[next.Num() - 1]->orientation.Y < 0)
+		orientation = -orientation;
+	orientation = delta + orientation;
+	newOrientation = FVector(cos(orientation), sin(orientation), next[next.Num() - 1]->point.Z);
+	newX = Velocity * cos(orientation)*TimeStep;
+	newY = Velocity * sin(orientation)*TimeStep;
+	newPosition = FVector(next[next.Num() - 1]->point.X + newX, next[next.Num() - 1]->point.Y + newY, next[next.Num() - 1]->point.Z);
+	next.Add(new CarNode(next[next.Num() - 1], newPosition, newOrientation));
+	for (int i = 1; i < timesteps; ++i) {
+		orientation = acos(GetCosAngle(FVector(1, 0, 0), next[next.Num() - 1]->orientation));
+		if (next[next.Num() - 1]->orientation.Y < 0)
+			orientation = -orientation;
+		orientation = delta + orientation; //THIS MIGHT BE TURN RIGHT
+		newOrientation = FVector(cos(orientation), sin(orientation), next[next.Num() - 1]->point.Z);
+		newX = Velocity * cos(orientation)*TimeStep;
+		newY = Velocity * sin(orientation)*TimeStep;
+		newPosition = FVector(next[next.Num() - 1]->point.X + newX, next[next.Num() - 1]->point.Y + newY, next[next.Num() - 1]->point.Z);
+		next.Add(new CarNode(next[next.Num() - 1], newPosition, newOrientation));
+	}
+	next.Add(new CarNode(next[next.Num() - 1], n2.point, n2.orientation));
+
+	for (int i = 0; i < next.Num(); ++i) {
+		if ((map.ObstacleCollisionCheck(next[i]->point)) || (map.OutsideBoundingBoxCheck(next[i]->point))) {
+			next.Empty();
+			break;
+		}
+	}
+	return next;
+
+}
+
+TArray<CarNode*> NodeSelector::RL(CarNode& n1, CarNode& n2, MapFunctions map, const UWorld* world) {
+	//Right Straight Left
+	float sign = 1;
+	//if (leftFirst) sign = 1;
+	TArray<CarNode*> next;
+	TArray<CarNode*> shortest;
+	float R = VehicleLength / tan(MaxTurnAngle);
+	FVector cross = FVector::CrossProduct(n1.orientation, FVector(0, 0, 1));
+	cross = (cross / cross.Size())*R;
+	n2.orientation.Z = n1.orientation.Z;
+	FVector cross2 = FVector::CrossProduct(n2.orientation, FVector(0, 0, 1));
+	cross2 = (cross2 / cross2.Size())*R;
+	FVector A = n1.point - (cross);
+	FVector D = n2.point + (cross2);
+	float delta = (Velocity / VehicleLength)*tan(MaxTurnAngle)*TimeStep;
+	A.Z = D.Z;
+	FVector d = D - A;
+	float theta = acos((2 * R) / d.Size());
+	float angleatan2 = atan2(D.Y - A.Y, D.X - A.X);
+	//theta += angleatan2;
+	//theta = -theta;
+	FVector B = FVector(A.X + R * cos(theta), A.Y + R * sin(theta), 0.0f);
+	FVector C = FVector(A.X + 2 * R*cos(theta), A.Y + 2 * R*sin(theta), 0.0f);
+	C = C ;
+	B = B ;
+	FVector direction_to_tangent = D - C;
+	float distance2 = sqrt(pow((D.X - C.X), 2.0) + pow((D.Y - C.Y), 2.0));
+	FVector E = B + direction_to_tangent;
+	FVector tangent = E - B;
+	B.Z = map.z;
+	DrawDebugSphere(world, D, 0.5, 26, FColor::Blue, true);
+	DrawDebugSphere(world, A, 0.5, 26, FColor::Blue, true);
+	DrawDebugSphere(world, E, 0.3, 26, FColor::Green, true);
+	DrawDebugSphere(world, B, 0.3, 26, FColor::Red, true);
+
+	float arcl = ArcLength(A, n1.point, B, R, true);
+	float timesteps = ceil(arcl / (Velocity * TimeStep));
+	float orientation = acos(GetCosAngle(FVector(1, 0, 0), n1.orientation));
+	if (n1.orientation.Y < 0)
+		orientation = -orientation;
+	orientation = delta + orientation; //plus delta cus turning right
+	FVector newOrientation = FVector(cos(orientation), sin(orientation), n1.point.Z);
+	float newX = Velocity * cos(orientation)*TimeStep;
+	float newY = Velocity * sin(orientation)*TimeStep;
+	FVector newPosition = FVector(n1.point.X + newX, n1.point.Y + newY, n1.point.Z);
+	next.Add(new CarNode(n1, newPosition, newOrientation));
+	for (int i = 1; i < timesteps; ++i) {
+		orientation = acos(GetCosAngle(FVector(1, 0, 0), next[i - 1]->orientation));
+		if (next[i - 1]->orientation.Y < 0)
+			orientation = -orientation;
+		orientation = delta + orientation; //THIS MIGHT BE TURN RIGHT
+		newOrientation = FVector(cos(orientation), sin(orientation), next[i - 1]->point.Z);
+		newX = Velocity * cos(orientation)*TimeStep;
+		newY = Velocity * sin(orientation)*TimeStep;
+		newPosition = FVector(next[i - 1]->point.X + newX, next[i - 1]->point.Y + newY, next[i - 1]->point.Z);
+		next.Add(new CarNode(next[i - 1], newPosition, newOrientation));
+	}
+	next.Add(new CarNode(next[next.Num() - 1], B, tangent / tangent.Size()));
+	orientation = acos(GetCosAngle(FVector(1, 0, 0), tangent / tangent.Size()));
+	if (tangent.Y < 0)
+		orientation = -orientation;
+	float arcL2 = sqrt(pow(tangent.X, 2) + pow(tangent.Y, 2));
+	UE_LOG(LogTemp, Display, TEXT("Arcl2: %f"), arcL2);
+
+	timesteps = ceil(arcL2 / (Velocity * TimeStep));
+	newX = Velocity * cos(orientation)*TimeStep;
+	newY = Velocity * sin(orientation)*TimeStep;
+	newPosition = FVector(next[next.Num() - 1]->point.X + newX, next[next.Num() - 1]->point.Y + newY, next[next.Num() - 1]->point.Z);
+	next.Add(new CarNode(next[next.Num() - 1], newPosition, tangent / tangent.Size()));
+	for (int i = 1; i < timesteps; ++i) {
+		newX = Velocity * cos(orientation)*TimeStep;
+		newY = Velocity * sin(orientation)*TimeStep;
+		newPosition = FVector(next[next.Num() - 1]->point.X + newX, next[next.Num() - 1]->point.Y + newY, next[next.Num() - 1]->point.Z);
+		next.Add(new CarNode(next[next.Num() - 1], newPosition, tangent / tangent.Size()));
+	}
+	next.Add(new CarNode(next[next.Num() - 1], E, tangent / tangent.Size()));
+	// TURN LEFT
+	//GO LEFT
+	float arcL3 = ArcLength(D, n2.point, E, R, true);
+	timesteps = ceil(arcL3 / (Velocity * TimeStep));
+	delta = (Velocity / VehicleLength)*tan(MaxTurnAngle)*TimeStep;
+	orientation = acos(GetCosAngle(FVector(1, 0, 0), next[next.Num() - 1]->orientation));
+	if (next[next.Num() - 1]->orientation.Y < 0)
+		orientation = -orientation;
+	orientation = -delta + orientation;
+	newOrientation = FVector(cos(orientation), sin(orientation), next[next.Num() - 1]->point.Z);
+	newX = Velocity * cos(orientation)*TimeStep;
+	newY = Velocity * sin(orientation)*TimeStep;
+	newPosition = FVector(next[next.Num() - 1]->point.X + newX, next[next.Num() - 1]->point.Y + newY, next[next.Num() - 1]->point.Z);
+	next.Add(new CarNode(next[next.Num() - 1], newPosition, newOrientation));
+	for (int i = 1; i < timesteps; ++i) {
+		orientation = acos(GetCosAngle(FVector(1, 0, 0), next[next.Num() - 1]->orientation));
+		if (next[next.Num() - 1]->orientation.Y < 0)
+			orientation = -orientation;
+		orientation = -delta + orientation; //THIS MIGHT BE TURN RIGHT
+		newOrientation = FVector(cos(orientation), sin(orientation), next[next.Num() - 1]->point.Z);
+		newX = Velocity * cos(orientation)*TimeStep;
+		newY = Velocity * sin(orientation)*TimeStep;
+		newPosition = FVector(next[next.Num() - 1]->point.X + newX, next[next.Num() - 1]->point.Y + newY, next[next.Num() - 1]->point.Z);
+		next.Add(new CarNode(next[next.Num() - 1], newPosition, newOrientation));
+	}
+	next.Add(new CarNode(next[next.Num() - 1], n2.point, n2.orientation));
+
+	for (int i = 0; i < next.Num(); ++i) {
+		if ((map.ObstacleCollisionCheck(next[i]->point)) || (map.OutsideBoundingBoxCheck(next[i]->point))) {
+			next.Empty();
+			break;
+		}
+	}
+	return next;
 
 }
 
@@ -719,6 +955,7 @@ CarNode* NodeSelector::GetDubinsPath(const CarNode&n1, const CarNode&n2) {
 
 void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector StartOrientation, FVector EndOrientation, MapFunctions map, const UWorld * world) {
 	CarNodes.Empty();
+	DrawDebugSphere(world, EndPosition, 0.5, 32, FColor::Yellow, true);
 	UE_LOG(LogTemp, Display, TEXT("Sampling goal node"));
 	//Create startnode
 	CarNode* GoalNode = new CarNode(EndPosition, EndOrientation);
@@ -773,7 +1010,10 @@ void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector St
 
 		CarNodes.Add(new CarNode(parent, NewNode->point, NewNode->orientation));
 		//Check dubins path
-		TArray<CarNode*> trivial = CalculateTangentPoints(*NewNode, *GoalNode, map, world);
+		//TArray<CarNode*> trivial = LR(*NewNode, *GoalNode, map, world);
+		TArray<CarNode*> trivial = RL(*NewNode, *GoalNode, map, world);
+
+		//TArray<CarNode*> trivial = CalculateTangentPoints(*NewNode, *GoalNode, map, world);
 		
 		UE_LOG(LogTemp, Display, TEXT("NR IN TRIV PATH:%d"), trivial.Num());
 		if (trivial.Num() != 0) {
