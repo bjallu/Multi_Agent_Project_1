@@ -610,11 +610,7 @@ TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, 
 	//next.Add(new CarNode(next[next.Num() - 1], n2.point, n2.orientation));
 
 	for (int i = 0; i < next.Num(); ++i) {
-<<<<<<< HEAD
 		if (map.ObstacleCollisionCheck(next[i]->point) || map.OutsideBoundingBoxCheck(next[i]->point)) {
-=======
-		if ((map.ObstacleCollisionCheck(next[i]->point)) || (!map.OutsideBoundingBoxCheck(next[i]->point))) {
->>>>>>> 45d66c6eb3aca4f7b8d05a828f5b0c1a9ec9b5f1
 			next.Empty();
 			break;
 		}
