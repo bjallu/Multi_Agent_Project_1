@@ -9,7 +9,11 @@
 #include "Obstacle.h"
 #include "DrawDebugHelpers.h"
 #include "DynamicNode.h"
+<<<<<<< HEAD
 #include "MapFunctions.h"
+=======
+#include "CarNode.h"
+>>>>>>> d5d9e1dc52c6ede63c4db546953d9d4dacaf4a28
 /**
  * 
  */
@@ -25,11 +29,13 @@ public:
 	float Acceleration;
 	TArray<Node*> nodes;
 	TArray<DynamicNode*> DynamicNodes;
+	TArray<CarNode*> CarNodes;
 	TArray<Obstacle> obstacles;
 	float TimeStep;
 	float Velocity;
 	float VehicleLength;
 	float MaxTurnSpeed;
+	float MaxTurnAngle;
 	FVector GoalVelocity;
 
 	NodeSelector();
@@ -46,7 +52,15 @@ public:
 	float GetCosAngle(const FVector&, const FVector&);
 	void dynamicPointRrt(FVector, FVector, FVector, FVector);
 	void GetDynamicRrtPath(TArray<DynamicNode*>&);
+	void getCarRrtPath(TArray<CarNode*>&);
 	DynamicNode* CalculateDynamicPointNode(const DynamicNode&, FVector);
+	void carRrt(FVector EndPosition, FVector StartPosition, FVector StartVelocity, FVector EndVelocity);
+	CarNode* CalculateCarNode(const CarNode&n1, const FVector n2);
+	CarNode* GetDubinsPath(const CarNode&n1, const CarNode&n2);
+	void CalculateTangentPoints(CarNode& n1, CarNode& n2);
+	std::vector<std::pair<FVector, FVector>>  TangentLines(FVector c1, FVector c2, float radc1, float radc2);
+	float ArcLength(FVector center, FVector left, FVector right, float radius, bool isleft);
+	TArray<CarNode*> LSR(std::vector<std::pair<FVector, FVector>>& _LRTangents, const FVector agentleft, float radleft, const FVector goalright, float radright, FVector currPos, FVector goalPos,const CarNode&n1);
 
 
 
