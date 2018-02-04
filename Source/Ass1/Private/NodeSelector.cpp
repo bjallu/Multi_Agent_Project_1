@@ -12,7 +12,7 @@ NodeSelector::NodeSelector()
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 3;
-	NumNodes = 1000;
+	NumNodes = 5000;
 	//GoalRadius = 1.0f;
 	GoalRadius = 0.3f;
 	nodes = TArray<Node*>();
@@ -490,7 +490,7 @@ TArray<CarNode*> NodeSelector::LSR(std::vector<std::pair<FVector, FVector>>& _LR
 		orientation = acos(GetCosAngle(FVector(1, 0, 0), next[next.Num() - 1]->orientation));
 		if (next[next.Num() - 1]->orientation.Y < 0)
 			orientation = -orientation;
-		orientation = delta + orientation;
+		orientation = delta - orientation;
 		newOrientation = FVector(cos(orientation), sin(orientation), next[next.Num() - 1]->point.Z);
 		newX = Velocity * cos(orientation)*TimeStep;
 		newY = Velocity * sin(orientation)*TimeStep;
@@ -511,7 +511,7 @@ TArray<CarNode*> NodeSelector::LSR(std::vector<std::pair<FVector, FVector>>& _LR
 	return next;
 }
 
-TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2) {
+TArray<CarNode*> NodeSelector::CalculateTangentPoints(CarNode& n1, CarNode& n2, MapFunctions map) {
 	float r1 = VehicleLength / tan(MaxTurnAngle);
 	float r2 = r1;
 	FVector cross = FVector::CrossProduct(n1.orientation, FVector(0, 0, 1));
@@ -602,13 +602,13 @@ void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector St
 
 		CarNodes.Add(new CarNode(parent, NewNode->point, NewNode->orientation));
 		//Check dubins path
-		TArray<CarNode*> trivial = CalculateTangentPoints(*NewNode, *GoalNode);
-		/*
+		TArray<CarNode*> trivial = CalculateTangentPoints(*NewNode, *GoalNode, map);
+		UE_LOG(LogTemp, Display, TEXT("NR IN TRIV PATH:%f"), trivial.Num());
 		if (trivial.Num() != 0) {
 			trivial[0]->parent = CarNodes[CarNodes.Num() - 1];
 			CarNodes.Append(trivial);
 			return;
-		}*/
+		}
 			
 		if (PointDistance(NewNode->point, EndPosition)<GoalRadius) {
 			CarNodes.Add(new CarNode(parent, EndPosition, EndOrientation));
