@@ -61,7 +61,7 @@ public:
 	//TArray<CarNode*> CalculateTangentPoints(CarNode& n1, CarNode& n2, MapFunctions map);
 	TArray<CarNode*> LR(CarNode& n1, CarNode& n2, MapFunctions map, const UWorld*);
 	TArray<CarNode*> RL(CarNode& n1, CarNode& n2, MapFunctions map, const UWorld*);
-
+	TArray<CarNode*> TraverseDubins(const CarNode& n1, const CarNode& n2, const FVector &A, const FVector &D, const float R, const FVector B, const FVector C, bool first, bool second, float firstDelta, float secondDelta, MapFunctions map);
 	TArray<CarNode*> CalculateTangentPoints(CarNode& n1, CarNode& n2, MapFunctions map,const UWorld*);
 	std::vector<std::pair<FVector, FVector>>  TangentLines(FVector c1, FVector c2, float radc1, float radc2);
 	float ArcLength(FVector center, FVector left, FVector right, float radius, bool isleft);

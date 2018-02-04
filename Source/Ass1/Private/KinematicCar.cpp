@@ -1,6 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "KinematicCar.h"
+#define _CRTDBG_MAP_ALLOC  
+#include <stdlib.h>  
+#include <crtdbg.h>  
 #include "UnrealEngine.h"
 #include "Components/SphereComponent.h"
 #include "Camera/CameraComponent.h"
@@ -58,7 +61,7 @@ void AKinematicCar::BeginPlay()
 	Super::BeginPlay();
 
 	// Draw map
-	map.ParseJson("P1");
+	map.ParseJson("P2");
 	DrawObstacles(map.obstacles, map);
 	DrawMap(map.bounding_box, map);
 	//NodeSelector = NodeSelector::NodeSelector(map);
@@ -138,8 +141,8 @@ void AKinematicCar::DrawGraph() {
 	const UWorld * world = GetWorld();
 	FVector location = GetActorLocation();
 	location.Z = 0;
-	float x = 10;
-	float y = 15;							// Change to read from json
+	float x = 30;
+	float y = 30;							// Change to read from json
 	//NodeSelector.RandomPosition(x, y);
 	FVector goal = FVector(x, y, map.z);
 	NodeSelector.carRrt(goal, location, FVector(0.5,-0.5, map.z), FVector(0.9,-0.2, map.z), map, world);
