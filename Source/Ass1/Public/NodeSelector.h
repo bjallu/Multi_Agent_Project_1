@@ -54,7 +54,7 @@ public:
 	void carRrt(FVector EndPosition, FVector StartPosition, FVector StartVelocity, FVector EndVelocity);
 	CarNode* CalculateCarNode(const CarNode&n1, const FVector n2);
 	CarNode* GetDubinsPath(const CarNode&n1, const CarNode&n2);
-	void CalculateTangentPoints(CarNode& n1, CarNode& n2);
+	TArray<CarNode*> CalculateTangentPoints(CarNode& n1, CarNode& n2);
 	std::vector<std::pair<FVector, FVector>>  TangentLines(FVector c1, FVector c2, float radc1, float radc2);
 	float ArcLength(FVector center, FVector left, FVector right, float radius, bool isleft);
 	TArray<CarNode*> LSR(std::vector<std::pair<FVector, FVector>>& _LRTangents, const FVector agentleft, float radleft, const FVector goalright, float radright, FVector currPos, FVector goalPos,const CarNode&n1);
