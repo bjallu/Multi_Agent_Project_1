@@ -57,7 +57,7 @@ ADynamicPoint::ADynamicPoint()
 void ADynamicPoint::BeginPlay()
 {
 	Super::BeginPlay();
-	map.ParseJson("P3");
+	map.ParseJson("P2");
 	DrawObstacles(map.obstacles, map);
 	DrawMap(map.bounding_box, map);
 }
@@ -144,8 +144,8 @@ void ADynamicPoint::DrawDebugLines() {
 		FVector next;
 		DrawDebugLine(world, GetActorLocation(), FVector(path[0]->point.X, path[0]->point.Y, GetActorLocation().Z), FColor::Emerald, true);
 		for (int i = 0; i < path.Num() - 1; ++i) {
-			current = FVector(path[i]->point.X, path[i]->point.Y,map.z);
-			next = FVector(path[i + 1]->point.X, path[i + 1]->point.Y, map.z);
+			current = FVector(path[i]->point.X, path[i]->point.Y, GetActorLocation().Z+1);
+			next = FVector(path[i + 1]->point.X, path[i + 1]->point.Y, GetActorLocation().Z+1);
 			DrawDebugLine(world, current, next, FColor::Emerald, true);
 		}
 	}
