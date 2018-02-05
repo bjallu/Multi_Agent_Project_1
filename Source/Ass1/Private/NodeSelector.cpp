@@ -14,10 +14,10 @@ NodeSelector::NodeSelector()
 //	minX = map.bounding_box.minX;
 //	maxY = map.bounding_box.maxY;
 //	minY = map.bounding_box.minY;
-	XBound = 30.f;
-	YBound = 30.f;
+	XBound = 50.f;
+	YBound = 50.f;
 	PathSize = 1;
-	NumNodes = 3000;
+	NumNodes = 50000;
 	//GoalRadius = 1.0f;
 	GoalRadius = 0.3f;
 	nodes = TArray<Node*>();
@@ -210,6 +210,14 @@ Node* NodeSelector::CalculateDifferentialPoint(const Node& n1, const FVector& n2
 void NodeSelector::differentialRrt(const FVector EndPosition, const FVector StartPosition, FVector startOrientation, FVector EndOrientation, MapFunctions map) {
 	nodes.Empty();
 	//Create startnode
+	TimeStep = map.vehicle_dt;
+	VehicleLength = map.vehicle_L;
+	Velocity = map.vehicle_v_max;
+	MaxTurnSpeed = map.vehicle_omega_max;
+	Acceleration = map.vehicle_a_max;
+	MaxTurnAngle = map.vehicle_phi_max;
+	//map.vehicle_t;
+	//Load all values from the map
 	Node* StartNode = new Node(StartPosition, startOrientation);
 	nodes.Add(StartNode);
 	int count = 0;

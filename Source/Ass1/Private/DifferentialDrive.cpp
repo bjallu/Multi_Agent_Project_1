@@ -59,7 +59,7 @@ void ADifferentialDrive::BeginPlay()
 	Super::BeginPlay();
 
 	// Draw map
-	map.ParseJson("P3");
+	map.ParseJson("P2");
 	DrawObstacles(map.obstacles, map);
 	DrawMap(map.bounding_box, map);
 
@@ -145,7 +145,7 @@ void ADifferentialDrive::DrawGraph() {
 
 
 	FVector goal = FVector(x, y, map.z);
-	NodeSelector.differentialRrt(goal, location, FVector(0.5,-0.5,map.z), FVector(0.9,-0.2, map.z),map);
+	NodeSelector.differentialRrt(map.pos_goal, map.pos_start, map.vel_start, map.vel_goal ,map);
 
 	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
 		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
