@@ -1,10 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "DifferentialDrive.h"
+#include "KinematicCar.h"
+#define _CRTDBG_MAP_ALLOC  
+#include <stdlib.h>  
+#include <crtdbg.h>  
 #include "UnrealEngine.h"
 #include "Components/SphereComponent.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/Pawn.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "ConstructorHelpers.h"
 #include "GameFramework/Pawn.h"
@@ -12,7 +14,7 @@
 #include "MapFunctions.h"
 
 // Sets default values
-ADifferentialDrive::ADifferentialDrive()
+AKinematicCar::AKinematicCar()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -49,24 +51,25 @@ ADifferentialDrive::ADifferentialDrive()
 
 	MovementComponent = CreateDefaultSubobject<UKinematicPointMovementComponent>(TEXT("CustomMovementComponent"));
 	MovementComponent->UpdatedComponent = RootComponent;
+
 	map = MapFunctions::MapFunctions();
-//NodeSelector = NodeSelector::NodeSelector(map);
 }
 
 // Called when the game starts or when spawned
-void ADifferentialDrive::BeginPlay()
+void AKinematicCar::BeginPlay()
 {
 	Super::BeginPlay();
 
 	// Draw map
-	map.ParseJson("P3");
+	map.ParseJson("P1");
 	DrawObstacles(map.obstacles, map);
 	DrawMap(map.bounding_box, map);
+	//NodeSelector = NodeSelector::NodeSelector(map);
 
 
 }
 
-float ADifferentialDrive::CalculateDistanceToGoal(const FVector XYLoc) {
+float AKinematicCar::CalculateDistanceToGoal(const FVector XYLoc) {
 	float distance = sqrt(pow(XYLoc.X - path[0]->point.X, 2) + pow(XYLoc.Y - path[0]->point.Y, 2));
 	for (int i = 0; i < path.Num() - 1; ++i) {
 		distance += sqrt(pow(path[i]->point.X - path[i + 1]->point.X, 2) + pow(path[i]->point.Y - path[i + 1]->point.Y, 2));
@@ -75,7 +78,7 @@ float ADifferentialDrive::CalculateDistanceToGoal(const FVector XYLoc) {
 }
 
 // Called every frame
-void ADifferentialDrive::Tick(float DeltaTime)
+void AKinematicCar::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -104,12 +107,12 @@ void ADifferentialDrive::Tick(float DeltaTime)
 
 }
 
-void ADifferentialDrive::DrawDebugLines() {
+void AKinematicCar::DrawDebugLines() {
 	if (path.Num() != 0) {
 		const UWorld *world = GetWorld();
 		FVector current;
 		FVector next;
-		DrawDebugLine(world, GetActorLocation(), FVector(path[0]->point.X, path[0]->point.Y, map.z), FColor::Emerald, true);
+		DrawDebugLine(world, GetActorLocation(), FVector(path[0]->point.X, path[0]->point.Y, GetActorLocation().Z), FColor::Emerald, true);
 		for (int i = 0; i < path.Num() - 1; ++i) {
 			current = FVector(path[i]->point.X, path[i]->point.Y, map.z);
 			next = FVector(path[i + 1]->point.X, path[i + 1]->point.Y, map.z);
@@ -119,76 +122,65 @@ void ADifferentialDrive::DrawDebugLines() {
 }
 
 // Called to bind functionality to input
-void ADifferentialDrive::SetupPlayerInputComponent(UInputComponent* InputComponent)
+void AKinematicCar::SetupPlayerInputComponent(UInputComponent* InputComponent)
 {
 	//Super::SetupPlayerInputComponent(InputComponent);
 
-	InputComponent->BindAxis("MoveForward", this, &ADifferentialDrive::MoveForward);
-	InputComponent->BindAxis("MoveRight", this, &ADifferentialDrive::MoveRight);
-	//InputComponent->BindAxis("Turn", this, &ADifferentialDrive::Turn);
-	InputComponent->BindAction("RandomDirection", IE_Pressed, this, &ADifferentialDrive::RandomTurn);
-	InputComponent->BindAction("RandomPosition", IE_Pressed, this, &ADifferentialDrive::RandomPosition);
-	InputComponent->BindAction("RandomPath", IE_Pressed, this, &ADifferentialDrive::GetPath);
-	InputComponent->BindAction("DrawGraph", IE_Pressed, this, &ADifferentialDrive::DrawGraph);
+	InputComponent->BindAxis("MoveForward", this, &AKinematicCar::MoveForward);
+	InputComponent->BindAxis("MoveRight", this, &AKinematicCar::MoveRight);
+	//InputComponent->BindAxis("Turn", this, &AKinematicCar::Turn);
+	InputComponent->BindAction("RandomDirection", IE_Pressed, this, &AKinematicCar::RandomTurn);
+	InputComponent->BindAction("RandomPosition", IE_Pressed, this, &AKinematicCar::RandomPosition);
+	InputComponent->BindAction("RandomPath", IE_Pressed, this, &AKinematicCar::GetPath);
+	InputComponent->BindAction("DrawGraph", IE_Pressed, this, &AKinematicCar::DrawGraph);
 
 }
 
-void ADifferentialDrive::DrawGraph() {
-	SetActorLocation(FVector(1.0f, 2.0f, map.z), false);
+void AKinematicCar::DrawGraph() {
+	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
+	const UWorld * world = GetWorld();
 	FVector location = GetActorLocation();
 	location.Z = 0;
-	float x = 32.0f;
-	float y = 22.0f;							// Change to read from json
-	const UWorld * world = GetWorld();
+	float x = 30;
+	float y = 30;							// Change to read from json
 	//NodeSelector.RandomPosition(x, y);
-	DrawDebugSphere(world, FVector(x, y, map.z), 2, 26, FColor::Red, true);
-
-
 	FVector goal = FVector(x, y, map.z);
-	NodeSelector.differentialRrt(map.pos_goal, map.pos_start, map.vel_start, map.vel_goal ,map);
+	NodeSelector.carRrt(map.pos_goal, map.pos_start, map.vel_start, map.vel_goal, map, world);
 
-	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
-		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
-	//const UWorld * world = GetWorld();
-	//UE_LOG(LogTemp, Display, TEXT("GREEN NODE: %f,%f"), x, y);
-	//DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Green, true);
-
-	if (NodeSelector.nodes.Num() != 0) {
+	if (NodeSelector.CarNodes.Num() != 0) {
 		FVector current;
 		FVector next;
-		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NodeSelector.nodes[0]->point.X, NodeSelector.nodes[0]->point.Y);
+		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NodeSelector.CarNodes[0]->point.X, NodeSelector.CarNodes[0]->point.Y);
 
-		for (int i = 1; i < NodeSelector.nodes.Num(); ++i) {
-			Node* parent = NodeSelector.nodes[i]->parent;
+		for (int i = 1; i < NodeSelector.CarNodes.Num(); ++i) {
+			CarNode* parent = NodeSelector.CarNodes[i]->parent;
 			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
-			NodeSelector.nodes[i]->point.Z = map.z;
-			
-			parent->point.Z = map.z;
+			NodeSelector.CarNodes[i]->point.Z = map.z;
+			//UE_LOG(LogTemp, Display, TEXT("I:%d"), i);
+			parent->point.Z =map.z;
 			//continue;
 			
-			//UE_LOG(LogTemp, Display, TEXT("HEIGHT %f"), NodeSelector.nodes[i]->point.Z);
-			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point, FColor::Red, true);
+			//UE_LOG(LogTemp, Display, TEXT("HEIGHT %f"), NodeSelector.CarNodes[i]->point.Z);
+			DrawDebugLine(world, NodeSelector.CarNodes[i]->point, parent->point, FColor::Red, true);
 		}
-		//DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 0.1f, 26, FColor::Blue, true);
+		//DrawDebugSphere(world, NodeSelector.CarNodes[NodeSelector.CarNodes.Num() - 1]->point, 0.1f, 26, FColor::Blue, true);
 
 	}
-	goal.Z += 1;
+	goal.Z = map.z;
 	DrawDebugSphere(world, goal, 0.1f, 26, FColor::Green, true);
-	//Move that shit
-
-	NodeSelector.GetRrtPath(path);
+	NodeSelector.getCarRrtPath(path);
 	HasGoalPosition = true;
 	DrawDebugLines();
 
 
 }
 
-UPawnMovementComponent* ADifferentialDrive::GetMovementComponent() const
+UPawnMovementComponent* AKinematicCar::GetMovementComponent() const
 {
 	return MovementComponent;
 }
 
-void ADifferentialDrive::MoveForward(float AxisValue)
+void AKinematicCar::MoveForward(float AxisValue)
 {
 
 	if (MovementComponent && (MovementComponent->UpdatedComponent == RootComponent))
@@ -199,7 +191,7 @@ void ADifferentialDrive::MoveForward(float AxisValue)
 
 }
 
-void ADifferentialDrive::MoveRight(float AxisValue)
+void AKinematicCar::MoveRight(float AxisValue)
 {
 
 	if (MovementComponent && (MovementComponent->UpdatedComponent == RootComponent))
@@ -212,37 +204,37 @@ void ADifferentialDrive::MoveRight(float AxisValue)
 
 }
 
-void ADifferentialDrive::Turn(float AxisValue)
+void AKinematicCar::Turn(float AxisValue)
 {
 	FRotator NewRotation = SpringArm->RelativeRotation;
 	NewRotation.Yaw += AxisValue;
 	SpringArm->SetRelativeRotation(NewRotation);
 }
 
-void ADifferentialDrive::RandomTurn() {
+void AKinematicCar::RandomTurn() {
 	FRotator NewRotation = GetActorRotation();
 	NewRotation.Yaw += rand();
 	SetActorRotation(NewRotation);
 }
 
-void ADifferentialDrive::RandomPosition() {
+void AKinematicCar::RandomPosition() {
 	float x;
 	float y;
 	this->NodeSelector.RandomPosition(x, y);
 	//UE_LOG(LogTemp,Display, TEXT("X: %f Y: %f"), x, y);
-	path.Add(new Node(FVector(x, y, 0.f)));
+	//path.Add(new Node(FVector(x, y, 0.f)));
 	HasGoalPosition = true;
 	DrawDebugLines();
 }
 
-void ADifferentialDrive::GetPath() {
+void AKinematicCar::GetPath() {
 	//NodeSelector.GetPath(path);
 	HasGoalPosition = true;
 	DrawDebugLines();
 }
 
 
-void ADifferentialDrive::MoveToPosition(float x, float y) {
+void AKinematicCar::MoveToPosition(float x, float y) {
 	//Calculate rotation
 	FVector MoveTo = FVector(x, y, 0);
 	FVector Forward = MoveTo - GetActorLocation();
@@ -252,7 +244,8 @@ void ADifferentialDrive::MoveToPosition(float x, float y) {
 
 }
 
-void ADifferentialDrive::DrawObstacles(std::vector<Obstacle> obs, MapFunctions map) {
+
+void AKinematicCar::DrawObstacles(std::vector<Obstacle> obs, MapFunctions map) {
 	const UWorld *world = GetWorld();
 	for (int i = 0; i < obs.size(); ++i) {
 		Obstacle obstocheck = obs[i];
@@ -269,7 +262,7 @@ void ADifferentialDrive::DrawObstacles(std::vector<Obstacle> obs, MapFunctions m
 	}
 }
 
-void ADifferentialDrive::DrawMap(Obstacle obs, MapFunctions map) {
+void AKinematicCar::DrawMap(Obstacle obs, MapFunctions map) {
 	const UWorld *world = GetWorld();
 	for (int j = 0; j < obs.points.size(); ++j) {
 		// Draw from the last to the first 

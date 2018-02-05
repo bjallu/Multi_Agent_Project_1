@@ -667,6 +667,12 @@ float NodeSelector::GetCarDistance(const CarNode& n1, const FVector n2) {
 
 void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector StartOrientation, FVector EndOrientation, MapFunctions map, const UWorld * world) {
 	CarNodes.Empty();
+	TimeStep = map.vehicle_dt;
+	VehicleLength = map.vehicle_L;
+	Velocity = map.vehicle_v_max;
+	MaxTurnSpeed = map.vehicle_omega_max;
+	Acceleration = map.vehicle_a_max;
+	MaxTurnAngle = map.vehicle_phi_max;
 	DrawDebugSphere(world, EndPosition, 0.5, 32, FColor::Yellow, true);
 	UE_LOG(LogTemp, Display, TEXT("Sampling goal node"));
 	//Create startnode

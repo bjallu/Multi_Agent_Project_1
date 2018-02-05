@@ -61,7 +61,7 @@ void AKinematicCar::BeginPlay()
 	Super::BeginPlay();
 
 	// Draw map
-	map.ParseJson("P2");
+	map.ParseJson("P3");
 	DrawObstacles(map.obstacles, map);
 	DrawMap(map.bounding_box, map);
 	//NodeSelector = NodeSelector::NodeSelector(map);
@@ -145,7 +145,7 @@ void AKinematicCar::DrawGraph() {
 	float y = 30;							// Change to read from json
 	//NodeSelector.RandomPosition(x, y);
 	FVector goal = FVector(x, y, map.z);
-	NodeSelector.carRrt(goal, location, FVector(0.5,-0.5, map.z), FVector(0.9,-0.2, map.z), map, world);
+	NodeSelector.carRrt(map.pos_goal, map.pos_start, map.vel_start, map.vel_goal, map, world);
 
 	if (NodeSelector.CarNodes.Num() != 0) {
 		FVector current;
