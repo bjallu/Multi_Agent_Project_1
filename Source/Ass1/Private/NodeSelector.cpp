@@ -536,6 +536,62 @@ TArray<CarNode*> NodeSelector::LR(CarNode& n1, CarNode& n2, MapFunctions map, co
 	return next;
 }
 
+TArray<DynamicNode*> NodeSelector::TangentsDynamicPoint(DynamicNode& n1, DynamicNode& n2, MapFunctions map, const UWorld* world) {
+
+	// Left left
+	TArray<DynamicNode*> shortest;
+	TArray<DynamicNode*> next;
+	//float R = VehicleLength / tan(MaxTurnAngle);
+	float n1Velocity = sqrt(n1.Velocity.X*n1.Velocity.X + n1.Velocity.Y*n1.Velocity.Y);
+	float n2Velocity = sqrt(n2.Velocity.X*n2.Velocity.X + n2.Velocity.Y*n2.Velocity.Y);
+
+	float R1 = pow(n1Velocity, 2) / map.vehicle_a_max;
+	float R2 = pow(n2Velocity, 2) / map.vehicle_a_max;
+
+	FVector cross = FVector::CrossProduct(n1.Velocity, FVector(0, 0, 1));
+	cross = (cross / cross.Size());
+	n2.Velocity.Z = n1.Velocity.Z;
+	FVector cross2 = FVector::CrossProduct(n2.Velocity, FVector(0, 0, 1));
+	cross2 = (cross2 / cross2.Size());
+
+	FVector A = n1.point + (cross)*R1;
+	FVector D = n2.point + (cross2)*R2;
+	A.Z = D.Z;
+
+	float distance = (D - A).Size();
+	float H = sqrt(pow(distance, 2) - pow((R1 - R2), 2));
+	float Y = sqrt(pow(H, 2) + pow(R2, 2));
+	float theta = acos((pow(R1, 2) + pow(distance, 2) - pow(Y, 2)) / (2 * R1*distance));
+	float angleatan2 = atan2(D.Y - A.Y, D.X - A.X); // might need to use Vector3.Angle(Vector3.right, p2 - p1) * Mathf.Deg2Rad;
+	//	if ((p2 - p1).z < 0)
+	//baseAngle = -baseAngle;
+	//
+	FVector B = FVector(A.X + R1 * cos(-theta + angleatan2), A.Y + R1 * sin(-theta + angleatan2), 0.0f);
+	FVector C = FVector(D.X + R2 * cos(-theta + angleatan2), D.Y + R2 * sin(-theta + angleatan2), 0.0f);
+	//next = TraverseDubins(n1, n2, A, D, B, C, false, true, -1, -1, map);
+
+	//right right pretty tight
+	FVector cross = FVector::CrossProduct(n1.Velocity, FVector(0, 0, 1));
+	cross = (cross / cross.Size());
+	n2.Velocity.Z = n1.Velocity.Z;
+	FVector cross2 = FVector::CrossProduct(n2.Velocity, FVector(0, 0, 1));
+	cross2 = (cross2 / cross2.Size());
+
+	FVector A = n1.point - (cross)*R1;
+	FVector D = n2.point - (cross2)*R2;
+	A.Z = D.Z;
+
+	float distance = (D - A).Size();
+	float H = sqrt(pow(distance, 2) - pow((R1 - R2), 2));
+	float Y = sqrt(pow(H, 2) + pow(R2, 2));
+	float theta = acos((pow(R1, 2) + pow(distance, 2) - pow(Y, 2)) / (2 * R1*distance));
+	float angleatan2 = atan2(D.Y - A.Y, D.X - A.X); // might need to use Vector3.Angle(Vector3.right, p2 - p1) * Mathf.Deg2Rad;
+	B = FVector(A.X + (theta + angleatan2)*R1, A.Y + sin(theta + angleatan2)*R1, 0.0f);
+	C = FVector(A.X + cos(theta + angleatan2)*R2, sin(theta + angleatan2)*R2, 0.0f);
+	//next = TraverseDubins(n1, n2, A, D, B, C, false, true, -1, -1, map);
+}
+
+
 TArray<CarNode*> NodeSelector::TraverseDubins(const CarNode& n1, const CarNode& n2, const FVector &A, const FVector &D, const float R, const FVector B, const FVector C, bool first, bool second, float firstDelta, float secondDelta, MapFunctions map) {
 	TArray<CarNode*> next;
 	FVector tangent = C - B;
