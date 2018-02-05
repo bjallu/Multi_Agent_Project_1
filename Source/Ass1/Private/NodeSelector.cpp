@@ -58,7 +58,7 @@ void NodeSelector::getCarRrtPath(TArray<CarNode*>& vectors) {
 	//nodes[0] is startposition so shouldnt include it
 	CarNode* CurrentNode = CarNodes[CarNodes.Num() - 1];
 	while (CurrentNode->point != CarNodes[0]->point) {
-		CurrentNode->point.Z = 0;
+		//CurrentNode->point.Z = 0;
 		vectors.Add(CurrentNode);
 		CurrentNode = CurrentNode->parent;
 	}
@@ -73,7 +73,7 @@ void NodeSelector::GetDynamicRrtPath(TArray<DynamicNode*>& vectors) {
 	DynamicNode* CurrentNode = DynamicNodes[DynamicNodes.Num() - 1];
 	while (CurrentNode->point != DynamicNodes[0]->point) {
 		//UE_LOG(LogTemp, Display, TEXT("CurrentNode x, y : %f, %f"), CurrentNode->point.X, CurrentNode->point.Y);
-		CurrentNode->point.Z = 0;
+		//CurrentNode->point.Z = 0;
 		vectors.Add(CurrentNode);
 		CurrentNode = CurrentNode->parent;
 	}
@@ -357,15 +357,137 @@ DynamicNode* NodeSelector::CalculateDynamicPointNode(const DynamicNode& n1, FVec
 	if (NewVelocity.Size() > Velocity) {
 		NewVelocity /= currentVelocity.Size(); //Normalize
 		NewVelocity *= Velocity;			//Set to max velocity
-												//UE_LOG(LogTemp, Display, TEXT("New Velocity: %f"), currentVelocity.Size());
 	}
 	FVector NewPosition = n1.point + NewVelocity * TimeStep;
 	return new DynamicNode(n1,NewPosition,NewVelocity);
 }
 
 
-void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, FVector StartVelocity, FVector EndVelocity) {
+TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, const DynamicNode& n2, const float R1, const float R2, const FVector tp1, const FVector tp2, const FVector p1, const FVector p2, bool rightStart, bool rightGoal, MapFunctions map, const UWorld* world) {
+	TArray<DynamicNode*> next;
+	FVector tangentline = tp2 - tp1;
+	if (map.ObstacleCollisionCheck(tp2) || map.ObstacleCollisionCheck(tp1)) return next;
+	float arcLength = getArcLength(n1.point - p1, tp1 - p1, rightStart, R1);
+	float movingDTs = arcLength / (TimeStep * n1.Velocity.Size());
+	int moveCount = ceil(movingDTs);	//How many times to move using the current velocity
+	float phi1 = arcLength / R1;		//the distance between two points of in the circle with radius R1
+	float angleStep = phi1 / moveCount; //The difference in the angle between two consecutive points from the circle center
+	float rotateRight = rightStart ? -1 : 1;
+	DynamicNode parent = n1;
+	float baseAngle = acos(GetCosAngle(FVector(1,0,0),n1.point-p1));
+	if ((n1.point - p1).Y > 0) baseAngle = -baseAngle;
+
+	// [0] is the current position
+	for (int i = 1; i < moveCount; ++i) {
+		FVector adir = (p1 - parent.point) / (p1 - parent.point).Size();
+		float newX = p1.X + R1 * cos(baseAngle + rotateRight * i * angleStep);
+		float newY = p1.Y + R1 * sin(baseAngle + rotateRight * i * angleStep);
+		FVector newPosition = FVector(newX, newY, map.z);
+		FVector newVelocity = FVector((newX - parent.point.X) / TimeStep, (newY - parent.point.Y)/TimeStep, 0.0f); // new velocity vector should be the distance we travelled between the last point to current split by the time we travelled
+		next.Add(new DynamicNode(parent,newPosition, newVelocity));
+		if (map.ObstacleCollisionCheck(newPosition)) {
+			next.Empty();
+			return next;
+		}
+		parent = *next[next.Num() - 1];
+	}
+	next.Add(new DynamicNode(next[next.Num() - 1],tp1,(tangentline/tangentline.Size())*n1.Velocity.Size())); //add tangent point with the velocity in direction of the tangent line with size of n1
+
+	//Move forward, time to match the goal velocity 
+	float movingDtsDacc = (n2.Velocity - next[next.Num()-1]->Velocity).Size() / Acceleration; //the time we need to deaccelerate or accelerate to goal velocity
+	float moveCountDacc = ceil(movingDtsDacc);
+
+	float coefficient = n2.Velocity.Size() > next[next.Num() - 1]->Velocity.Size() ? 1 : -1; //Deaccelerate or accelerate
+	float distance = 0.0f;
+	float vel = next[next.Num() - 1]->Velocity.Size();
+
+	for (int i = 0; i < moveCountDacc; ++i) {
+		distance += vel * TimeStep;						   //Distance we travel through the tangent line until we start acceleration/deacceleration
+		vel = vel + coefficient * Acceleration * TimeStep; //Assuming that the goal velocity is not higher than our allowed velocity
+	}
+	if (distance > tangentline.Size()) {
+		next.Empty();
+		return next;
+	}
+	movingDTs = (tangentline.Size() - distance) / (next[next.Num() - 1]->Velocity.Size() * TimeStep); //Time we use to deacellerate or accelerate
+	moveCount = ceil(movingDTs);
+	//Move on tangent line
+	for (int i = 0; i < moveCount; ++i) {
+		FVector NewPosition = tp1 + i * TimeStep + next[next.Num() - 1]->Velocity.Size() * (tangentline / tangentline.Size());
+		next.Add(new DynamicNode(next[next.Num()-1],NewPosition,(tangentline/tangentline.Size())* next[next.Num()-1]->Velocity.Size()));
+		if (map.ObstacleCollisionCheck(NewPosition)) {
+			next.Empty();
+			return next;
+		}
+	}
+	next.Add(new DynamicNode(next[next.Num() - 1], tp2 - (tangentline / tangentline.Size()) * distance, (tangentline/tangentline.Size()) * next[next.Num()-1]->Velocity.Size()));
+	if (map.ObstacleCollisionCheck(tp2 - (tangentline / tangentline.Size()) * distance)) {
+		next.Empty();
+		return next;
+	}
+	// Now we add the accelerate / deaccelerate nodes
+
+	for (int i = 0; i < moveCountDacc; ++i) {
+		vel = (next[next.Num() - 1]->Velocity.Size() + coefficient * Acceleration) * TimeStep;
+		FVector NewPosition = next[next.Num() - 1]->point + (tangentline / tangentline.Size()) * vel;
+		next.Add(new DynamicNode(next[next.Num() - 1], NewPosition, (tangentline / tangentline.Size())*vel/TimeStep));
+		if (map.ObstacleCollisionCheck(NewPosition)) {
+			next.Empty();
+			return next;
+		}
+	}
+	//Add tangent point 2
+	next.Add(new DynamicNode(next[next.Num()-1], tp2, n2.Velocity.Size()* (tangentline / tangentline.Size())));
+
+
+	arcLength = getArcLength(tp2 - p2, n2.point - p2, rightGoal, R2);
+	movingDTs = arcLength / (TimeStep * n2.Velocity.Size());
+	moveCount = ceil(movingDTs);
+	phi1 = arcLength / R2;
+	angleStep = phi1 / moveCount;
+	baseAngle = acos(GetCosAngle(FVector(1,0,0),tp2-p2));
+	if ((tp2 - p2).Y > 0) baseAngle = -baseAngle;
+	rotateRight = rightGoal ? -1 : 1;
+	for (int i = 1; i < moveCount; ++i) {
+		FVector adir = (p2 - next[next.Num() - 1]->point) / (p2 - next[next.Num() - 1]->point).Size();
+		float newX = p2.X + R2 * cos(baseAngle + rotateRight * i * angleStep);
+		float newY = p2.Y + R2 * sin(baseAngle + rotateRight * i * angleStep);
+		FVector NewPosition = FVector(newX, newY, map.z);
+		FVector NewVelocity = FVector((newX - next[next.Num()-1]->point.X )/ TimeStep, (newY - next[next.Num() - 1]->point.Y) / TimeStep, 0.0f);
+		next.Add(new DynamicNode(next[next.Num() - 1], NewPosition, NewVelocity));
+		if (map.ObstacleCollisionCheck(NewPosition)) {
+			next.Empty();
+			return next;
+		}
+	}
+	next.Add(new DynamicNode(next[next.Num()-1],n2.point,n2.Velocity));
+
+
+	return next;
+
+}
+
+float NodeSelector::getArcLength(FVector v1, FVector v2, bool right, float radius){
+	float theta = atan2(v1.X, v1.Z) - atan2(v2.X, v2.Z);
+	if (theta < 0.f && !right)
+		theta = theta + 2 * PI;
+	else if (theta > 0.f && right)
+		theta = theta - 2 * PI;
+	return abs(theta * radius);
+}
+
+void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, FVector StartVelocity, FVector EndVelocity, MapFunctions map) {
 	DynamicNodes.Empty();
+	TimeStep = map.vehicle_dt;
+	VehicleLength = map.vehicle_L;
+	Velocity = map.vehicle_v_max;
+	MaxTurnSpeed = map.vehicle_omega_max;
+	Acceleration = map.vehicle_a_max;
+	MaxTurnAngle = map.vehicle_phi_max;
+	float minX = map.bounding_box.minX;
+	float maxX = map.bounding_box.maxX;
+	float minY = map.bounding_box.minY;
+	float maxY = map.bounding_box.maxY;
 	//Create startnode
 	DynamicNode* StartNode = new DynamicNode(StartPosition, StartVelocity);
 	DynamicNodes.Add(StartNode);
@@ -375,13 +497,15 @@ void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, F
 	float y = 0;
 	FVector rand = FVector(x, y, StartPosition.Z);
 	DynamicNode* parent = DynamicNodes[0];
+	DynamicNode* nodeToCompare;
 	DynamicNode* NewNode = parent;
 	while (count < NumNodes) {
 		//Check if there is a straight line to the target from the current position
 		foundNext = false;
 		while (!foundNext) {
-			rand.X = FMath::RandRange(-XBound, XBound);
-			rand.Y = FMath::RandRange(-YBound, YBound);
+			rand.X = FMath::RandRange(minX, maxX);
+			rand.Y = FMath::RandRange(minY, maxY);
+			if (map.OutsideBoundingBoxCheck(rand)) continue;
 			if (count % 20 == 0) {
 				rand.X = EndPosition.X;
 				rand.Y = EndPosition.Y;
@@ -389,10 +513,13 @@ void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, F
 				//UE_LOG(LogTemp, Display, TEXT("Sampling goal node"));
 			}
 			for (int i = 0; i < DynamicNodes.Num(); ++i) {
-				if (PointDistance(DynamicNodes[i]->point, rand) <= PointDistance(parent->point, rand)) {
-					NewNode = CalculateDynamicPointNode(*DynamicNodes[i], rand);
-					parent = DynamicNodes[i];
-					foundNext = true;
+				if (PointDistance(DynamicNodes[i]->point, rand) <= PointDistance(parent->point, rand)) { //ADD COLLISION CHECKT
+					nodeToCompare = CalculateDynamicPointNode(*DynamicNodes[i], rand);
+					if (!map.ObstacleCollisionCheck(nodeToCompare->point)) {
+						NewNode = CalculateDynamicPointNode(*DynamicNodes[i], rand);
+						parent = DynamicNodes[i];
+						foundNext = true;
+					}
 				}
 			}
 		}
@@ -401,7 +528,7 @@ void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, F
 
 		DynamicNodes.Add(new DynamicNode(parent, NewNode->point,NewNode->Velocity));
 
-		if (PointDistance(NewNode->point, EndPosition)<GoalRadius) {
+		if (PointDistance(NewNode->point, EndPosition)<1) {
 			DynamicNodes.Add(new DynamicNode(parent, EndPosition, EndVelocity));
 			UE_LOG(LogTemp, Display, TEXT("FOUND GOAL"));
 			count = NumNodes;

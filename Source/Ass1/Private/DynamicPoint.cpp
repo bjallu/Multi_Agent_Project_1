@@ -57,7 +57,41 @@ ADynamicPoint::ADynamicPoint()
 void ADynamicPoint::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	map.ParseJson("P1");
+	DrawObstacles(map.obstacles, map);
+	DrawMap(map.bounding_box, map);
+}
+
+
+void ADynamicPoint::DrawObstacles(std::vector<Obstacle> obs, MapFunctions map) {
+	const UWorld *world = GetWorld();
+	for (int i = 0; i < obs.size(); ++i) {
+		Obstacle obstocheck = obs[i];
+		for (int j = 0; j < obstocheck.points.size(); ++j) {
+			// Draw from the last to the first 
+			if (j == (obstocheck.points.size() - 1)) {
+				DrawDebugLine(world, FVector(obstocheck.points[j][2], obstocheck.points[j][3], map.z), FVector(obstocheck.points[0][2], obstocheck.points[0][3], map.z), FColor::Emerald, true);
+			}
+			//Otherwise we always draw to the next one
+			else {
+				DrawDebugLine(world, FVector(obstocheck.points[j][2], obstocheck.points[j][3], map.z), FVector(obstocheck.points[j + 1][2], obstocheck.points[j + 1][3], map.z), FColor::Emerald, true);
+			}
+		}
+	}
+}
+
+void ADynamicPoint::DrawMap(Obstacle obs, MapFunctions map) {
+	const UWorld *world = GetWorld();
+	for (int j = 0; j < obs.points.size(); ++j) {
+		// Draw from the last to the first 
+		if (j == (obs.points.size() - 1)) {
+			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], map.z), FVector(obs.points[0][2], obs.points[0][3], map.z), FColor::Emerald, true);
+		}
+		//Otherwise we always draw to the next one
+		else {
+			DrawDebugLine(world, FVector(obs.points[j][2], obs.points[j][3], map.z), FVector(obs.points[j + 1][2], obs.points[j + 1][3], map.z), FColor::Emerald, true);
+		}
+	}
 }
 
 float ADynamicPoint::CalculateDistanceToGoal(const FVector XYLoc) {
@@ -140,7 +174,7 @@ void ADynamicPoint::DrawGraph() {
 	float x = 10;
 	float y = 15;							// Change to read from json
 	FVector goal = FVector(x, y, 0.f);
-	NodeSelector.dynamicPointRrt(goal, location, startVelocity, goalVelocity);
+	NodeSelector.dynamicPointRrt(map.pos_goal, map.pos_start, map.vel_start, map.vel_goal, map);
 	//UE_LOG(LogTemp,Display,TEXT("%f,%f"),GetActorLocation().X,GetActorLocation().Y)
 	//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
 	const UWorld * world = GetWorld();
