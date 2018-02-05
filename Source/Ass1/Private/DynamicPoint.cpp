@@ -195,7 +195,7 @@ void ADynamicPoint::DrawGraph() {
 	
 	NodeSelector.GetDynamicRrtPath(path);
 	HasGoalPosition = true;					// CRASHES
-	DrawDebugLines();
+	//DrawDebugLines();
 	
 	
 	

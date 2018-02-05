@@ -25,7 +25,7 @@ NodeSelector::NodeSelector()
 	DynamicNodes = TArray<DynamicNode*>();
 	obstacles = TArray<Obstacle>();
 	StepSize = 20;
-	TimeStep = 0.1;
+	TimeStep = 10;
 	VehicleLength = 2.0;
 	Velocity = 1.1;
 	MaxTurnSpeed = 1.0;
@@ -378,34 +378,47 @@ TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, cons
 	FVector tempn1= n1.point;
 	tempn1.Z = map.z;
 	DrawDebugSphere(world, tempn2, 0.2, 26, FColor::Yellow, true);
-	//DrawDebugSphere(world, tempp1, R1, 26, FColor::Blue, true);
-	//DrawDebugSphere(world, tempp2, R2-0.1, 26, FColor::Blue, true);
+	DrawDebugSphere(world, tempp1, 0.2, 26, FColor::Blue, true);
+	DrawDebugSphere(world, tempp2, 0.2, 26, FColor::Blue, true);
 	DrawDebugSphere(world, temptp1, 0.2, 26, FColor::Red, true);
 	DrawDebugSphere(world, temptp2, 0.2, 26, FColor::Green, true);
 	DrawDebugSphere(world, tempn1, 0.2, 26, FColor::Black, true);
+
+	//DrawDebugLine(world, tempp1, temptp1, FColor::Green, true);
+	//DrawDebugLine(world, tempp1, tempn1, FColor::Green, true);
+
 	//FVector n1Velocity = n1.Velocity
 	FVector tangentline = tp2 - tp1;
-	UE_LOG(LogTemp, Display, TEXT("n2 vel Size: %f, %f, %f"), n2.Velocity.X, n2.Velocity.Y, n2.Velocity.Z);
+	//DrawDebugLine(world, temptp1, temptp1 + tangentline, FColor::Cyan, true);
 
-	
-	DrawDebugLine(world, temptp1, temptp1 + tangentline, FColor::Cyan, true);
 	if (map.ObstacleCollisionCheck(tp2) || map.ObstacleCollisionCheck(tp1)) return next;
-	float arcLength = getArcLength(n1.point - p1, tp1 - p1, rightStart, R1);
-	UE_LOG(LogTemp, Display, TEXT("Velocity Size: %f"), n1.Velocity.Size());
+	float arcLength = getArcLength(n1.point - p1, tp1 - p1, !rightStart, R1);
+	UE_LOG(LogTemp, Display, TEXT("n1 Z vel %f"), n1.Velocity.Z);
+	UE_LOG(LogTemp, Display, TEXT("arclength %f"), arcLength);
+	UE_LOG(LogTemp, Display, TEXT("radians %f"), arcLength/R1/(2*PI));
+
+
 
 	float movingDTs = arcLength / (TimeStep * n1.Velocity.Size());
 	float moveCount = ceil(movingDTs);	//How many times to move using the current velocity
 	float phi1 = arcLength / R1;		//the distance between two points of in the circle with radius R1
+	UE_LOG(LogTemp, Display, TEXT("phi %f"), phi1);
 	float angleStep = phi1 / moveCount; //The difference in the angle between two consecutive points from the circle center
-	float rotateRight = rightStart ? -1 : 1;
-	float baseAngle = acos(GetCosAngle(FVector(1,0,0),n1.point-p1));
+	float rotateRight = rightStart ? 1 : -1;
+	float baseAngle = acos(GetCosAngle(FVector(1,0,0),n1.point - p1));
+
+	//float baseAngle = atan2((n1.point - p1).X, (n1.point - p1).Y);
 	if ((n1.point - p1).Y < 0) baseAngle = -baseAngle;
+	DrawDebugLine(world, tempp1, tempp1 + FVector(R1, 0, 0),FColor::Green,true);
+	DrawDebugLine(world, tempp1, tempp1 + FVector(R1 * cos(baseAngle), R1 * sin(baseAngle), 0), FColor::Purple, true);
+	DrawDebugLine(world, tempp1, tempp1 + FVector(R1 * cos(baseAngle-phi1), R1 * sin(baseAngle-phi1), 0), FColor::Magenta, true);
+	UE_LOG(LogTemp, Display, TEXT("baseangle+phi %f"), phi1+baseAngle);
 
 
-	FVector adir = (p1 - n1.point) / (p1 - n1.point).Size();
+
 	float newX = p1.X + R1 * cos(baseAngle + rotateRight * angleStep);
 	float newY = p1.Y + R1 * sin(baseAngle + rotateRight * angleStep);
-	FVector newPosition = FVector(newX, newY, map.z);
+	FVector newPosition = FVector(newX, newY, 0.0);
 	FVector newVelocity = FVector((newX - n1.point.X) / TimeStep, (newY - n1.point.Y) / TimeStep, 0.0f); // new velocity vector should be the distance we travelled between the last point to current split by the time we travelled
 	next.Add(new DynamicNode(n1, newPosition, newVelocity));
 	if (map.ObstacleCollisionCheck(newPosition)) {
@@ -413,8 +426,7 @@ TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, cons
 		return next;
 	}
 	// [0] is the current position
-	for (int i = 1; i < moveCount; ++i) {
-		FVector adir = (p1 - next[next.Num() - 1]->point) / (p1 - next[next.Num() - 1]->point).Size();
+	for (int i = 2; i <= moveCount; ++i) {
 		float newX = p1.X + R1 * cos(baseAngle + rotateRight * i * angleStep);
 		float newY = p1.Y + R1 * sin(baseAngle + rotateRight * i * angleStep);
 		FVector newPosition = FVector(newX, newY, map.z);
@@ -426,8 +438,13 @@ TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, cons
 			return next;
 		}
 	}
+	FVector sphereVector = next[next.Num() - 1]->point;
+	sphereVector.Z = map.z;
+	//DrawDebugSphere(world, sphereVector, 0.3, 26, FColor::Purple, true);
 	next.Add(new DynamicNode(next[next.Num() - 1],tp1,(tangentline/tangentline.Size())*n1.Velocity.Size())); //add tangent point with the velocity in direction of the tangent line with size of n1
 	
+	DrawDebugLine(world, next[next.Num() - 1]->point + FVector(0,0,map.z), next[next.Num() - 1]->point + tangentline + FVector(0,0,map.z), FColor::Cyan, true);
+
 	//Move forward
 	float movingDtsDacc = (n2.Velocity - next[next.Num()-1]->Velocity).Size() / Acceleration; //the time we need to deaccelerate or accelerate to goal velocity
 	float moveCountDacc = ceil(movingDtsDacc);
@@ -435,7 +452,7 @@ TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, cons
 	float coefficient = n2.Velocity.Size() > next[next.Num() - 1]->Velocity.Size() ? 1 : -1; //Deaccelerate or accelerate
 	float distance = 0.0f;
 	float vel = next[next.Num() - 1]->Velocity.Size();
-	/*
+	
 	for (int i = 0; i < moveCountDacc; ++i) {
 		distance += vel * TimeStep;						   //Distance we travel through the tangent line until we start acceleration/deacceleration
 		vel = vel + coefficient * Acceleration * TimeStep; //Assuming that the goal velocity is not higher than our allowed velocity
@@ -444,17 +461,19 @@ TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, cons
 		next.Empty();
 		return next;
 	}
-	*/
 	
 	movingDTs = (tangentline.Size() - distance) / (next[next.Num() - 1]->Velocity.Size() * TimeStep); //Time we use to deacellerate or accelerate
 	moveCount = ceil(movingDTs);
+	UE_LOG(LogTemp, Display, TEXT("Move count: %f"), moveCount);
 
 	
 	//Move on tangent line
-
-	for (int i = 0; i < moveCount; ++i) {
-		FVector NewPosition = tp1 + i * TimeStep + next[next.Num() - 1]->Velocity.Size() * (tangentline / tangentline.Size());
+	// PROBLEM BETWEEN HERE
+	
+	for (int i = 1; i < moveCount; ++i) {
+		FVector NewPosition = tp1 + i * TimeStep * next[next.Num() - 1]->Velocity.Size() * (tangentline / tangentline.Size());
 		next.Add(new DynamicNode(next[next.Num()-1],NewPosition,(tangentline/tangentline.Size())* next[next.Num()-1]->Velocity.Size()));
+		DrawDebugSphere(world, NewPosition + FVector(0, 0, map.z), 0.2, 26, FColor::Blue, true);
 		if (map.ObstacleCollisionCheck(NewPosition)) {
 			next.Empty();
 			return next;
@@ -465,35 +484,36 @@ TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, cons
 		next.Empty();
 		return next;
 	}
+	
 	// Now we add the accelerate / deaccelerate nodes
-
-	for (int i = 0; i < moveCountDacc; ++i) {
+	
+	for (int i = 1; i < moveCountDacc; ++i) {
 		vel = (next[next.Num() - 1]->Velocity.Size() + coefficient * Acceleration) * TimeStep;
 		FVector NewPosition = next[next.Num() - 1]->point + (tangentline / tangentline.Size()) * vel;
 		next.Add(new DynamicNode(next[next.Num() - 1], NewPosition, (tangentline / tangentline.Size())*vel/TimeStep));
+		UE_LOG(LogTemp, Display, TEXT("Point on tangent: %f, %f"), NewPosition.X, NewPosition.Y);
 		if (map.ObstacleCollisionCheck(NewPosition)) {
 			next.Empty();
 			return next;
 		}
 	}
-	
+	// AND HERE
 	//Add tangent point 2
 	next.Add(new DynamicNode(next[next.Num()-1], tp2, n2.Velocity.Size()* (tangentline / tangentline.Size())));
 
 
-	arcLength = getArcLength(tp2 - p2, n2.point - p2, rightGoal, R2);
+	arcLength = getArcLength(tp2 - p2, n2.point - p2, !rightGoal, R2);
 	movingDTs = arcLength / (TimeStep * n2.Velocity.Size());
-	moveCount = ceil(movingDTs);
+	moveCount = int(ceil(movingDTs));
 	phi1 = arcLength / R2;
 	angleStep = phi1 / moveCount;
 	baseAngle = acos(GetCosAngle(FVector(1,0,0),tp2-p2));
 	if ((tp2 - p2).Y < 0) baseAngle = -baseAngle;
-	rotateRight = rightGoal ? -1 : 1;
+	rotateRight = rightGoal ? 1 : -1;
 	for (int i = 1; i < moveCount; ++i) {
-		FVector adir = (p2 - next[next.Num() - 1]->point) / (p2 - next[next.Num() - 1]->point).Size();
 		float newX = p2.X + R2 * cos(baseAngle + rotateRight * i * angleStep);
 		float newY = p2.Y + R2 * sin(baseAngle + rotateRight * i * angleStep);
-		FVector NewPosition = FVector(newX, newY, map.z);
+		FVector NewPosition = FVector(newX, newY, 0.0);
 		FVector NewVelocity = FVector((newX - next[next.Num()-1]->point.X )/ TimeStep, (newY - next[next.Num() - 1]->point.Y) / TimeStep, 0.0f);
 		next.Add(new DynamicNode(next[next.Num() - 1], NewPosition, NewVelocity));
 		if (map.ObstacleCollisionCheck(NewPosition)) {
@@ -503,6 +523,7 @@ TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, cons
 	}
 	next.Add(new DynamicNode(next[next.Num()-1],n2.point,n2.Velocity));
 	UE_LOG(LogTemp, Display, TEXT("ADDED ALL NODES %d"), next.Num());
+	
 
 	return next;
 
@@ -536,14 +557,14 @@ TArray<DynamicNode*> NodeSelector::TangentsDynamicPoint(DynamicNode& n1,DynamicN
 	float distance = (D - A).Size();
 	float H = sqrt(pow(distance, 2) - pow((R1 - R2), 2));
 	float Y = sqrt(pow(H, 2) + pow(R2, 2));
-	float theta = -acos((pow(R1, 2) + pow(distance, 2) - pow(Y, 2)) / (2 * R1*distance));
+	float theta = acos((pow(R1, 2) + pow(distance, 2) - pow(Y, 2)) / (2 * R1*distance));
 	//float angleatan2 = atan2(D.Y - A.Y, D.X - A.X); // might need to use Vector3.Angle(Vector3.right, p2 - p1) * Mathf.Deg2Rad;
-	float angleatan2 = acos(GetCosAngle(FVector(1, 0,0), D - A));											//	if ((p2 - p1).z < 0)
+	float angleatan2 = acos(GetCosAngle(FVector(1, 0, 0), D - A));											//	if ((p2 - p1).z < 0)
 	if ((D - A).Y < 0) angleatan2 = -angleatan2;					//baseAngle = -baseAngle;
 													//
-	FVector B = FVector(A.X + R1 * cos(-theta + angleatan2), A.Y + R1 * sin(-theta + angleatan2), 0.0f);
-	FVector C = FVector(D.X + R2 * cos(-theta + angleatan2), D.Y + R2 * sin(-theta + angleatan2), 0.0f);
-	next = DynamicDubinsMove(n1, n2, R1, R2, B, C, A, D, true, true, map, world);
+	FVector B = FVector(A.X + R1 * cos(theta + angleatan2), A.Y + R1 * sin(theta + angleatan2), 0.0f);
+	FVector C = FVector(D.X + R2 * cos(theta + angleatan2), D.Y + R2 * sin(theta + angleatan2), 0.0f);
+	next = DynamicDubinsMove(n1, n2, R1, R2, B, C, A, D, false, false, map, world);
 	UE_LOG(LogTemp, Display, TEXT("next.Num: %d"), next.Num());
 
 	/*
@@ -572,7 +593,7 @@ TArray<DynamicNode*> NodeSelector::TangentsDynamicPoint(DynamicNode& n1,DynamicN
 }
 
 float NodeSelector::getArcLength(FVector v1, FVector v2, bool right, float radius){
-	float theta = atan2(v1.X, v1.Z) - atan2(v2.X, v2.Z);
+	float theta = atan2(v1.X, v1.Y) - atan2(v2.X, v2.Y);
 	if (theta < 0.f && !right)
 		theta = theta + 2 * PI;
 	else if (theta > 0.f && right)
@@ -593,8 +614,8 @@ void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, F
 	float minY = map.bounding_box.minY;
 	float maxY = map.bounding_box.maxY;
 	//Create startnode
-	DynamicNode* StartNode = new DynamicNode(StartPosition, StartVelocity*2);
-	DynamicNode* GoalNode = new DynamicNode(EndPosition, EndVelocity*2);
+	DynamicNode* StartNode = new DynamicNode(StartPosition, StartVelocity*3);
+	DynamicNode* GoalNode = new DynamicNode(EndPosition, EndVelocity*3);
 	DynamicNodes.Add(StartNode);
 	int count = 0;
 	bool foundNext = false;
