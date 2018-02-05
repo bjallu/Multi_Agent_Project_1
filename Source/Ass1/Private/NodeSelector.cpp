@@ -409,10 +409,7 @@ TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, cons
 
 	//float baseAngle = atan2((n1.point - p1).X, (n1.point - p1).Y);
 	if ((n1.point - p1).Y < 0) baseAngle = -baseAngle;
-	DrawDebugLine(world, tempp1, tempp1 + FVector(R1, 0, 0),FColor::Green,true);
-	DrawDebugLine(world, tempp1, tempp1 + FVector(R1 * cos(baseAngle), R1 * sin(baseAngle), 0), FColor::Purple, true);
-	DrawDebugLine(world, tempp1, tempp1 + FVector(R1 * cos(baseAngle-phi1), R1 * sin(baseAngle-phi1), 0), FColor::Magenta, true);
-	UE_LOG(LogTemp, Display, TEXT("baseangle+phi %f"), phi1+baseAngle);
+
 
 
 
@@ -473,7 +470,6 @@ TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, cons
 	for (int i = 1; i < moveCount; ++i) {
 		FVector NewPosition = tp1 + i * TimeStep * next[next.Num() - 1]->Velocity.Size() * (tangentline / tangentline.Size());
 		next.Add(new DynamicNode(next[next.Num()-1],NewPosition,(tangentline/tangentline.Size())* next[next.Num()-1]->Velocity.Size()));
-		DrawDebugSphere(world, NewPosition + FVector(0, 0, map.z), 0.2, 26, FColor::Blue, true);
 		if (map.ObstacleCollisionCheck(NewPosition)) {
 			next.Empty();
 			return next;
@@ -564,10 +560,10 @@ TArray<DynamicNode*> NodeSelector::TangentsDynamicPoint(DynamicNode& n1,DynamicN
 													//
 	FVector B = FVector(A.X + R1 * cos(theta + angleatan2), A.Y + R1 * sin(theta + angleatan2), 0.0f);
 	FVector C = FVector(D.X + R2 * cos(theta + angleatan2), D.Y + R2 * sin(theta + angleatan2), 0.0f);
-	next = DynamicDubinsMove(n1, n2, R1, R2, B, C, A, D, false, false, map, world);
+	//next = DynamicDubinsMove(n1, n2, R1, R2, B, C, A, D, false, false, map, world);
 	UE_LOG(LogTemp, Display, TEXT("next.Num: %d"), next.Num());
 
-	/*
+	
 	//right right pretty tight
 	cross = FVector::CrossProduct(n1.Velocity, FVector(0, 0, 1));
 	cross = (cross / cross.Size());
@@ -582,12 +578,28 @@ TArray<DynamicNode*> NodeSelector::TangentsDynamicPoint(DynamicNode& n1,DynamicN
 	distance = (D - A).Size();
 	H = sqrt(pow(distance, 2) - pow((R1 - R2), 2));
 	Y = sqrt(pow(H, 2) + pow(R2, 2));
+	theta = -acos((pow(R1, 2) + pow(distance, 2) - pow(Y, 2)) / (2 * R1*distance));
+	angleatan2 = acos(GetCosAngle(FVector(1, 0, 0), D - A)); // might need to use Vector3.Angle(Vector3.right, p2 - p1) * Mathf.Deg2Rad;
+	if ((D - A).Y < 0) angleatan2 = -angleatan2;					//baseAngle = -baseAngle;
+	B = FVector(A.X + cos(theta + angleatan2)*R1, A.Y + sin(theta + angleatan2)*R1, 0.0f);
+	C = FVector(D.X + cos(theta + angleatan2)*R2, D.Y + sin(theta + angleatan2)*R2, 0.0f);
+	next = DynamicDubinsMove(n1, n2, R1, R2, B, C, A, D, true, true, map, world);
+
+	A = n1.point - (cross)*R1;
+	D = n2.point + (cross2)*R2;
+	A.Z = D.Z;
+
+	distance = (D - A).Size();
+	H = sqrt(pow(distance, 2) - pow((R1 - R2), 2));
+	Y = sqrt(pow(H, 2) + pow(R2, 2));
 	theta = acos((pow(R1, 2) + pow(distance, 2) - pow(Y, 2)) / (2 * R1*distance));
-	angleatan2 = atan2(D.Y - A.Y, D.X - A.X); // might need to use Vector3.Angle(Vector3.right, p2 - p1) * Mathf.Deg2Rad;
-	B = FVector(A.X + (theta + angleatan2)*R1, A.Y + sin(theta + angleatan2)*R1, 0.0f);
-	C = FVector(A.X + cos(theta + angleatan2)*R2, sin(theta + angleatan2)*R2, 0.0f);
-	//next = TraverseDubins(n1, n2, A, D, B, C, false, true, -1, -1, map);
-	*/
+	angleatan2 = acos(GetCosAngle(FVector(1, 0, 0), D - A)); // might need to use Vector3.Angle(Vector3.right, p2 - p1) * Mathf.Deg2Rad;
+	if ((D - A).Y < 0) angleatan2 = -angleatan2;					//baseAngle = -baseAngle;
+	B = FVector(A.X + cos(theta + angleatan2)*R1, A.Y + sin(theta + angleatan2)*R1, 0.0f);
+	C = FVector(D.X + cos(theta + angleatan2)*R2, D.Y + sin(theta + angleatan2)*R2, 0.0f);
+	//next = DynamicDubinsMove(n1, n2, R1, R2, B, C, A, D, true, false, map, world);
+
+
 
 	return next;
 }
