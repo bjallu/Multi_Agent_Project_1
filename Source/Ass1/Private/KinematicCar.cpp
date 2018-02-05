@@ -147,12 +147,6 @@ void AKinematicCar::DrawGraph() {
 	FVector goal = FVector(x, y, map.z);
 	NodeSelector.carRrt(goal, location, FVector(0.5,-0.5, map.z), FVector(0.9,-0.2, map.z), map, world);
 
-	//UE_LOG(LogTemp, Display, TEXT("%f,%f"), x, y)
-		//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
-	//const UWorld * world = GetWorld();
-	//UE_LOG(LogTemp, Display, TEXT("GREEN NODE: %f,%f"), x, y);
-	//DrawDebugSphere(world, FVector(x, y, GetActorLocation().Z), 2, 26, FColor::Green, true);
-
 	if (NodeSelector.CarNodes.Num() != 0) {
 		FVector current;
 		FVector next;
@@ -174,8 +168,6 @@ void AKinematicCar::DrawGraph() {
 	}
 	goal.Z = map.z;
 	DrawDebugSphere(world, goal, 0.1f, 26, FColor::Green, true);
-	//Move that shit
-
 	NodeSelector.getCarRrtPath(path);
 	HasGoalPosition = true;
 	DrawDebugLines();
