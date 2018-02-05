@@ -174,6 +174,8 @@ void ADynamicPoint::DrawGraph() {
 	float x = 10;
 	float y = 15;							// Change to read from json
 	FVector goal = FVector(x, y, 0.f);
+	map.vel_start.Z = 0.f;
+	map.vel_goal.Z = 0.f;
 	NodeSelector.dynamicPointRrt(map.pos_goal, map.pos_start, map.vel_start, map.vel_goal, map, world);
 	//UE_LOG(LogTemp,Display,TEXT("%f,%f"),GetActorLocation().X,GetActorLocation().Y)
 	//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
@@ -192,7 +194,7 @@ void ADynamicPoint::DrawGraph() {
 	//Move that shit
 	
 	NodeSelector.GetDynamicRrtPath(path);
-	HasGoalPosition = true;					// CRASHES
+	//HasGoalPosition = true;					// CRASHES
 	DrawDebugLines();
 	
 	
