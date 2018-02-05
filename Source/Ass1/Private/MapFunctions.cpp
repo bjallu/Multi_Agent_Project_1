@@ -189,7 +189,6 @@ bool MapFunctions::ParseMap(const FString& jsonfile, const FString& jsonFileName
 }
 
 bool MapFunctions::OutsideBoundingBoxCheck(const FVector& pointToCheck) {
-	return false;
 	Obstacle obs = this->bounding_box;
 	// First check to try and speed this up
 	if (pointToCheck.X < obs.minX || pointToCheck.X > obs.maxX || pointToCheck.Y < obs.minY || pointToCheck.Y > obs.maxY) {
@@ -257,7 +256,6 @@ bool MapFunctions::isInside(Obstacle obs, int n, FVector p){
 
 bool MapFunctions::ObstacleCollisionCheck(const FVector& pointToCheck) {
 	//std::vector<Obstacle*> obs = this->obstacles;
-	return false;
 	std::vector<Obstacle> obs = obstacles;
 	for (int k = 0; k < obs.size(); ++k) {
 		Obstacle obstocheck = obs[k];

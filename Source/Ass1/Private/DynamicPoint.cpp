@@ -57,7 +57,7 @@ ADynamicPoint::ADynamicPoint()
 void ADynamicPoint::BeginPlay()
 {
 	Super::BeginPlay();
-	map.ParseJson("P1");
+	map.ParseJson("P3");
 	DrawObstacles(map.obstacles, map);
 	DrawMap(map.bounding_box, map);
 }
@@ -195,7 +195,7 @@ void ADynamicPoint::DrawGraph() {
 	
 	NodeSelector.GetDynamicRrtPath(path);
 	HasGoalPosition = true;					// CRASHES
-	//DrawDebugLines();
+	DrawDebugLines();
 	
 	
 	
