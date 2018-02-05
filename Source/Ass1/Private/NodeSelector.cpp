@@ -17,7 +17,7 @@ NodeSelector::NodeSelector()
 	XBound = 30.f;
 	YBound = 30.f;
 	PathSize = 1;
-	NumNodes = 45000;
+	NumNodes = 3000;
 	//GoalRadius = 1.0f;
 	GoalRadius = 0.3f;
 	nodes = TArray<Node*>();
@@ -379,36 +379,6 @@ void NodeSelector::dynamicPointRrt(FVector EndPosition, FVector StartPosition, F
 //Kinematic Car RRT
 //-------------------------------------------------------//
 
-CarNode* NodeSelector::GetNearestCar(const FVector position) {
-	std::vector<CarNode*> closestNodes;
-	float N = (NrOfCarNodes < CarNodes.Num()) ? NrOfCarNodes : CarNodes.Num();
-	for (int i = 0; i < N; ++i) {
-		closestNodes.push_back(CarNodes[i]);
-	}
-	std::sort(closestNodes.begin(), closestNodes.end(), [&position](CarNode* n1, CarNode* n2) -> bool {
-		return sqrt(pow(n1->point.X - position.X, 2) + pow(n1->point.Y - position.Y, 2)) > sqrt(pow(n2->point.X - position.X, 2) + pow(n2->point.Y - position.Y, 2));
-	});
-	for (int i = 1; i < CarNodes.Num(); ++i) {
-		if (PointDistance(CarNodes[i]->point, position) < PointDistance(closestNodes[0]->point, position)) {
-			closestNodes.push_back(CarNodes[i]);
-			if (closestNodes.size() >= NrOfCarNodes)
-				closestNodes.erase(closestNodes.begin());
-		}
-	}
-	UE_LOG(LogTemp, Display, TEXT("Size of closestNodes: %d"), closestNodes.size());
-	int closestOrientation = 0;
-	float closestAngle = acos(GetCosAngle(closestNodes[0]->orientation, position));
-	for (int i = 1; i < closestNodes.size(); ++i) {
-		float angle = acos(GetCosAngle(closestNodes[i]->orientation,position));
-		if (angle < closestAngle) {
-			UE_LOG(LogTemp, Display, TEXT("Found new best at %d"),i);
-
-			closestOrientation = i;
-			closestAngle = angle;
-		}
-	}
-	return new CarNode(CarNodes[closestOrientation]->parent, CarNodes[closestOrientation]->point, CarNodes[closestOrientation]->orientation);
-}
 
 CarNode* NodeSelector::CalculateCarNode(const CarNode&n1, const FVector n2) {
 	FVector path = n2 - n1.point;
@@ -676,12 +646,14 @@ TArray<CarNode*> NodeSelector::RL(CarNode& n1, CarNode& n2, MapFunctions map, co
 
 }
 
-CarNode* NodeSelector::GetDubinsPath(const CarNode&n1, const CarNode&n2) {
-	float r1 = VehicleLength/tan(MaxTurnAngle);
-	float r2 = r1;
-	
-
-	return new CarNode(n1);
+float NodeSelector::GetCarDistance(const CarNode& n1, const FVector n2) {
+	float distance = PointDistance(n1.point, n2);
+	float angleDistance = atan2(n2.Y - n1.orientation.Y, n2.X - n1.orientation.X);
+	//float angleDistance = atan2(n2.Y, n2.X) - atan2(n1.orientation.Y, n1.orientation.X);
+	//float angleDistance = acos(GetCosAngle(n1.orientation,n2));
+	float R = VehicleLength / tan(MaxTurnAngle);
+	float angledistance = R * angleDistance;
+	return angleDistance + distance;
 }
 
 
@@ -726,7 +698,7 @@ void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector St
 			//UE_LOG(LogTemp, Display, TEXT("Sampling  node"));
 			//for (int i = 0; i < CarNodes.Num(); ++i) 
 			for (int i = 0; i < CarNodes.Num(); ++i) {
-				if (PointDistance(CarNodes[i]->point, rand) <= PointDistance(parent->point, rand)) {
+				if (GetCarDistance(*CarNodes[i], rand) <= GetCarDistance(*parent, rand)) {
 					CarNode *nodeToTest;
 					nodeToTest = CalculateCarNode(*CarNodes[i], rand);
 					FVector coordinates = nodeToTest->point;
