@@ -17,7 +17,7 @@ NodeSelector::NodeSelector()
 	XBound = 50.f;
 	YBound = 50.f;
 	PathSize = 1;
-	NumNodes = 2000;
+	NumNodes = 50000;
 	//GoalRadius = 1.0f;
 	GoalRadius = 0.3f;
 	nodes = TArray<Node*>();
@@ -45,7 +45,7 @@ void NodeSelector::GetRrtPath(TArray<Node*>& vectors) {
 	//nodes[0] is startposition so shouldnt include it
 	Node* CurrentNode = nodes[nodes.Num() - 1];
 	while (CurrentNode->point != nodes[0]->point) {
-		CurrentNode->point.Z = 0;
+		//CurrentNode->point.Z = 0;
 		vectors.Add(CurrentNode);
 		CurrentNode = CurrentNode->parent;
 	}
@@ -100,11 +100,15 @@ FVector NodeSelector::CalculatePoint(const FVector &p1, const FVector &p2) {
 	if (PointDistance(p1, p2) <= Velocity * TimeStep) {
 		return p2; //p2 is the new random point, they are close to eachother
 	}
-	FVector dir = p2 - p1;
-	dir.Z = 0;
-	dir = dir / dir.Size(); //Normalize
+	FVector po1 = p1;
+	FVector po2 = p2;
+	po1.Z = 0.f;
+	po2.Z = po1.Z;
+	FVector dir = po2 - po1;
+	//dir.Z = 0;
+	dir = (dir / dir.Size()) * Velocity * TimeStep; //Normalize
 	float theta = atan2(p2.Y - p1.Y, p2.X - p1.X);
-	return FVector(p1.X + Velocity * TimeStep * dir.X, p1.Y + Velocity * TimeStep * dir.Y, 0.f);
+	return p1 + dir;
 }
 
 void NodeSelector::rrt(const FVector EndPosition, const FVector StartPosition, FVector startOrientation, FVector EndOrientation, MapFunctions map) {
@@ -126,8 +130,11 @@ void NodeSelector::rrt(const FVector EndPosition, const FVector StartPosition, F
 	float maxX = map.bounding_box.maxX;
 	float minY = map.bounding_box.minY;
 	float maxY = map.bounding_box.maxY;
-
-	FVector rand = FVector(x, y, StartPosition.Z);
+	//UE_LOG(LogTemp, Display, TEXT("end: %f, %f"), EndPosition.X, EndPosition.Y);
+	//UE_LOG(LogTemp, Display, TEXT("start: %f, %f"), StartPosition.X, StartPosition.Y);
+	FVector NewPoint;
+	FVector coordinates;
+	FVector rand = FVector(x, y, map.z);
 	Node* parent = nodes[0];
 	while (count < NumNodes) {
 		//Check if there is a straight line to the target from the current position
@@ -143,33 +150,37 @@ void NodeSelector::rrt(const FVector EndPosition, const FVector StartPosition, F
 
 				//UE_LOG(LogTemp, Display, TEXT("Sampling goal node"));
 			}
-
+			//UE_LOG(LogTemp, Display, TEXT("STILL SAMPLING"));
 			for (int i = 0; i < nodes.Num(); ++i) {
 				if (PointDistance(nodes[i]->point, rand) <= PointDistance(parent->point, rand)) {
-					FVector coordinates;
 					coordinates = CalculatePoint(nodes[i]->point, rand);
+					//UE_LOG(LogTemp, Display, TEXT("Coordinates: %f, %f, %s"),coordinates.X, coordinates.Y, map.ObstacleCollisionCheck(coordinates)? TEXT("True"): TEXT("False"));
+
 					if (!map.ObstacleCollisionCheck(coordinates)) {
 
 						//UE_LOG(LogTemp, Display, TEXT("do we ever get here"));
-						FVector NewPoint = coordinates;
+						NewPoint = coordinates;
 						parent = nodes[i];
 						foundNext = true;
 					}
 				}
 			}
 		}
-		FVector NewNode = CalculatePoint(parent->point, rand);
 		//NewNode.Z = 70.f;
 		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), NewNode.X, NewNode.Y);
+		
 
-		nodes.Add(new Node(parent, NewNode));
-
-		if (PointDistance(NewNode, EndPosition)<GoalRadius) {
+		nodes.Add(new Node(parent, NewPoint));
+		//UE_LOG(LogTemp, Display, TEXT("NewPoint: %f, %f"), NewPoint.X, NewPoint.Y);
+		//UE_LOG(LogTemp, Display, TEXT("distance to goal: %f"), PointDistance(NewPoint, EndPosition));
+		if (PointDistance(NewPoint, EndPosition)<Velocity*TimeStep) {
 			nodes.Add(new Node(parent, EndPosition));
 			UE_LOG(LogTemp, Display, TEXT("FOUND GOAL"));
+			return;
 			count = NumNodes;
 		}
 		//Draw debug line
+		UE_LOG(LogTemp, Display, TEXT("nodes: %d"), count);
 		count++;
 	}
 	UE_LOG(LogTemp, Display, TEXT("nr of nodes: %d"), nodes.Num());
@@ -723,7 +734,7 @@ void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector St
 			rand.Y = FMath::RandRange(minY, maxY);
 			// First check if its in bounding box if it is continue
 			if (map.OutsideBoundingBoxCheck(rand)) continue;
-			if (count % 80 == 0) {
+			if (count % 10 == 0) {
 				rand.X = EndPosition.X;
 				rand.Y = EndPosition.Y;
 
@@ -756,8 +767,8 @@ void NodeSelector::carRrt(FVector EndPosition, FVector StartPosition, FVector St
 		TArray<CarNode*> trivial = LR(*NewNode, *GoalNode, map, world);
 		TArray<CarNode*> trivial2 = RL(*NewNode, *GoalNode, map, world);
 		TArray<CarNode*> trivial3 = CalculateTangentPoints(*NewNode, *GoalNode, map, world);
-		if (trivial.Num() > trivial2.Num()) trivial = trivial2;
-		if (trivial.Num() > trivial3.Num()) trivial = trivial3;
+		if (trivial.Num() > trivial2.Num() && trivial2.Num() != 0) trivial = trivial2;
+		if (trivial.Num() > trivial3.Num() && trivial3.Num() != 0) trivial = trivial3;
 
 		UE_LOG(LogTemp, Display, TEXT("NR IN TRIV PATH:%d"), trivial.Num());
 		if (trivial.Num() != 0) {

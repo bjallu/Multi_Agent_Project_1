@@ -71,7 +71,7 @@ AKinematicPoint::AKinematicPoint()
 	FVector pos_goal = FVector(0.0f, 0.0f, -40.0f);
 	FVector pos_start = FVector(0.0f, 0.0f, -40.0f);
 	map = MapFunctions::MapFunctions();
-	m_jsonfileName = "P1";
+	
 //	NodeSelector = NodeSelector::NodeSelector(map);
 }
 
@@ -84,7 +84,7 @@ void AKinematicPoint::BeginPlay()
 	// Create the map 
 	//Obstacle obs = Obstacle::Obstacle();
 	//map = MapFunctions::MapFunctions();
-	map.ParseJson("P2");
+	map.ParseJson("P3");
 	DrawObstacles(map.obstacles, map);
 	DrawMap(map.bounding_box, map);
 
@@ -95,7 +95,7 @@ void AKinematicPoint::BeginPlay()
 }
 
 void AKinematicPoint::DrawGraph() {
-	SetActorLocation(FVector(1.0f, 2.0f, map.z), false);
+	SetActorLocation(map.pos_start, false);
 	FVector location = GetActorLocation();
 	location.Z = 0;
 	float x = 10;
@@ -105,6 +105,7 @@ void AKinematicPoint::DrawGraph() {
 
 	FVector goal = FVector(x, y, 0.f);
 	NodeSelector.rrt(map.pos_goal, map.pos_start, map.vel_start, map.vel_goal, map);
+	UE_LOG(LogTemp, Display, TEXT("DONE WITH RRT"));
 	const UWorld * world = GetWorld();
 	//Draw that shit
 	if (NodeSelector.nodes.Num() != 0) {
@@ -116,15 +117,17 @@ void AKinematicPoint::DrawGraph() {
 			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
 			if (NodeSelector.nodes[i]->point.Z == 0.0) {
 				UE_LOG(LogTemp, Display, TEXT("FOUND 0 IN current"));
+				NodeSelector.nodes[i]->point.Z = map.z;
 				continue;
 			}
 			if (parent->point.Z == 0.0) {
 				UE_LOG(LogTemp, Display, TEXT("FOUND 0 IN parent"));
+				parent->point.Z = map.z;
 				continue;
 			}
 			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point, FColor::Red, true);
 		}
-		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 5.f, 26, FColor::Blue, true);
+		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 1.f, 26, FColor::Blue, true);
 	}
 	//Move that shit
 	NodeSelector.GetRrtPath(path);
@@ -201,10 +204,10 @@ void AKinematicPoint::DrawDebugLines() {
 		const UWorld *world = GetWorld();
 		FVector current;
 		FVector next;
-		DrawDebugLine(world, GetActorLocation(), FVector(path[0]->point.X, path[0]->point.Y, GetActorLocation().Z), FColor::Emerald, true);
+		DrawDebugLine(world, GetActorLocation(), FVector(path[0]->point.X, path[0]->point.Y, map.z), FColor::Emerald, true);
 		for (int i = 0; i < path.Num() - 1; ++i) {
-			current = FVector(path[i]->point.X, path[i]->point.Y, GetActorLocation().Z);
-			next = FVector(path[i + 1]->point.X, path[i + 1]->point.Y, GetActorLocation().Z);
+			current = FVector(path[i]->point.X, path[i]->point.Y, map.z);
+			next = FVector(path[i + 1]->point.X, path[i + 1]->point.Y, map.z);
 			DrawDebugLine(world, current, next, FColor::Emerald, true);
 		}
 	}
