@@ -165,8 +165,8 @@ void ADynamicPoint::SetupPlayerInputComponent(UInputComponent* InputComponent)
 }
 
 void ADynamicPoint::DrawGraph() {
-	//SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
-	SetActorLocation(FVector(map.pos_start.X, map.pos_start.Y, map.z));
+	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
+	FVector location = GetActorLocation();
 	FVector startVelocity = FVector(0.5, -0.5, 0.0);
 	FVector goalVelocity = FVector(0.9, -0.2, 0.0);
 	const UWorld * world = GetWorld();
@@ -183,9 +183,9 @@ void ADynamicPoint::DrawGraph() {
 	for (int i = 1; i < NodeSelector.DynamicNodes.Num(); ++i) {
 		DynamicNode* parent = NodeSelector.DynamicNodes[i]->parent;
 		//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
-		NodeSelector.DynamicNodes[i]->point.Z = map.z;
+		NodeSelector.DynamicNodes[i]->point.Z = GetActorLocation().Z + 1;
 
-		parent->point.Z = map.z;
+		parent->point.Z = GetActorLocation().Z + 1;
 		//continue;
 
 		//UE_LOG(LogTemp, Display, TEXT("HEIGHT %f"), NodeSelector.nodes[i]->point.Z);
@@ -194,7 +194,7 @@ void ADynamicPoint::DrawGraph() {
 	//Move that shit
 	
 	NodeSelector.GetDynamicRrtPath(path);
-	HasGoalPosition = true;					// CRASHES
+	//HasGoalPosition = true;					// CRASHES
 	DrawDebugLines();
 	
 	
