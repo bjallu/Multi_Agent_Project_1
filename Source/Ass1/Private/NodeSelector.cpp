@@ -17,7 +17,7 @@ NodeSelector::NodeSelector()
 	XBound = 50.f;
 	YBound = 50.f;
 	PathSize = 1;
-	NumNodes = 50000;
+	NumNodes = 2000;
 	//GoalRadius = 1.0f;
 	GoalRadius = 0.3f;
 	nodes = TArray<Node*>();
@@ -107,34 +107,54 @@ FVector NodeSelector::CalculatePoint(const FVector &p1, const FVector &p2) {
 	return FVector(p1.X + Velocity * TimeStep * dir.X, p1.Y + Velocity * TimeStep * dir.Y, 0.f);
 }
 
-void NodeSelector::rrt(FVector EndPosition, FVector StartPosition) {
+void NodeSelector::rrt(const FVector EndPosition, const FVector StartPosition, FVector startOrientation, FVector EndOrientation, MapFunctions map) {
 	nodes.Empty();
 	//Create startnode
+	TimeStep = map.vehicle_dt;
+	VehicleLength = map.vehicle_L;
+	Velocity = map.vehicle_v_max;
+	MaxTurnSpeed = map.vehicle_omega_max;
+	Acceleration = map.vehicle_a_max;
+	MaxTurnAngle = map.vehicle_phi_max;
 	Node* StartNode = new Node(StartPosition);
 	nodes.Add(StartNode);
 	int count = 0;
 	bool foundNext = false;
 	float x = 0;
 	float y = 0;
+	float minX = map.bounding_box.minX;
+	float maxX = map.bounding_box.maxX;
+	float minY = map.bounding_box.minY;
+	float maxY = map.bounding_box.maxY;
+
 	FVector rand = FVector(x, y, StartPosition.Z);
 	Node* parent = nodes[0];
 	while (count < NumNodes) {
 		//Check if there is a straight line to the target from the current position
 		foundNext = false;
 		while (!foundNext) {
-			rand.X = FMath::RandRange(-XBound, XBound);
-			rand.Y = FMath::RandRange(-YBound, YBound);
+			rand.X = FMath::RandRange(minX, maxX);
+			rand.Y = FMath::RandRange(minY, maxY);
+			// First check if its in bounding box if it is continue
+			if (map.OutsideBoundingBoxCheck(rand)) continue;
 			if (count % 20 == 0) {
 				rand.X = EndPosition.X;
 				rand.Y = EndPosition.Y;
 
 				//UE_LOG(LogTemp, Display, TEXT("Sampling goal node"));
 			}
+
 			for (int i = 0; i < nodes.Num(); ++i) {
 				if (PointDistance(nodes[i]->point, rand) <= PointDistance(parent->point, rand)) {
-					FVector NewPoint = CalculatePoint(nodes[i]->point, rand);
-					parent = nodes[i];
-					foundNext = true;
+					FVector coordinates;
+					coordinates = CalculatePoint(nodes[i]->point, rand);
+					if (!map.ObstacleCollisionCheck(coordinates)) {
+
+						//UE_LOG(LogTemp, Display, TEXT("do we ever get here"));
+						FVector NewPoint = coordinates;
+						parent = nodes[i];
+						foundNext = true;
+					}
 				}
 			}
 		}

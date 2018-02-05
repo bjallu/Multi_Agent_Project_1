@@ -71,7 +71,7 @@ AKinematicPoint::AKinematicPoint()
 	FVector pos_goal = FVector(0.0f, 0.0f, -40.0f);
 	FVector pos_start = FVector(0.0f, 0.0f, -40.0f);
 	map = MapFunctions::MapFunctions();
-	m_jsonfileName = "P2";
+	m_jsonfileName = "P1";
 //	NodeSelector = NodeSelector::NodeSelector(map);
 }
 
@@ -95,7 +95,7 @@ void AKinematicPoint::BeginPlay()
 }
 
 void AKinematicPoint::DrawGraph() {
-	SetActorLocation(FVector(1.0f, 2.0f, GetActorLocation().Z), false);
+	SetActorLocation(FVector(1.0f, 2.0f, map.z), false);
 	FVector location = GetActorLocation();
 	location.Z = 0;
 	float x = 10;
@@ -104,7 +104,7 @@ void AKinematicPoint::DrawGraph() {
 	//NodeSelector.RandomPosition(x, y);
 
 	FVector goal = FVector(x, y, 0.f);
-	NodeSelector.rrt(goal, location);
+	NodeSelector.rrt(map.pos_goal, map.pos_start, map.vel_start, map.vel_goal, map);
 	const UWorld * world = GetWorld();
 	//Draw that shit
 	if (NodeSelector.nodes.Num() != 0) {

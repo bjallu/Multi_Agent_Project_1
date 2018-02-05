@@ -44,7 +44,7 @@ public:
 	~NodeSelector();
 	void GetRrtPath(TArray<Node*>& vectors);
 	void RandomPosition(float&, float&);
-	void rrt(FVector, FVector);
+	void rrt(const FVector, const FVector, const FVector, const FVector, MapFunctions map);
 	FVector CalculatePoint(const FVector&, const FVector&);
 	float PointDistance(const FVector&, const FVector&);
 	void differentialRrt(const FVector, const FVector, const FVector, const FVector, MapFunctions map);
