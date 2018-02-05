@@ -115,19 +115,16 @@ void AKinematicPoint::DrawGraph() {
 		for (int i = 1; i < NodeSelector.nodes.Num(); ++i) {
 			Node* parent = NodeSelector.nodes[i]->parent;
 			//UE_LOG(LogTemp, Display, TEXT("%f, %f"), parent->point.X, parent->point.Y);
-			if (NodeSelector.nodes[i]->point.Z == 0.0) {
-				UE_LOG(LogTemp, Display, TEXT("FOUND 0 IN current"));
-				NodeSelector.nodes[i]->point.Z = map.z;
-				continue;
-			}
-			if (parent->point.Z == 0.0) {
-				UE_LOG(LogTemp, Display, TEXT("FOUND 0 IN parent"));
-				parent->point.Z = map.z;
-				continue;
-			}
+			NodeSelector.nodes[i]->point.Z = map.z;
+				
+	
+			parent->point.Z = map.z;
+				
+			
 			DrawDebugLine(world, NodeSelector.nodes[i]->point, parent->point, FColor::Red, true);
 		}
-		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 1.f, 26, FColor::Blue, true);
+		NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point.Z = map.z;
+		DrawDebugSphere(world, NodeSelector.nodes[NodeSelector.nodes.Num() - 1]->point, 0.2f, 26, FColor::Blue, true);
 	}
 	//Move that shit
 	NodeSelector.GetRrtPath(path);

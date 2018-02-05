@@ -144,7 +144,7 @@ void NodeSelector::rrt(const FVector EndPosition, const FVector StartPosition, F
 			rand.Y = FMath::RandRange(minY, maxY);
 			// First check if its in bounding box if it is continue
 			if (map.OutsideBoundingBoxCheck(rand)) continue;
-			if (count % 20 == 0) {
+			if (count % 3000 == 0) {
 				rand.X = EndPosition.X;
 				rand.Y = EndPosition.Y;
 
