@@ -169,15 +169,14 @@ void ADynamicPoint::DrawGraph() {
 	FVector location = GetActorLocation();
 	FVector startVelocity = FVector(0.5, -0.5, 0.0);
 	FVector goalVelocity = FVector(0.9, -0.2, 0.0);
-
+	const UWorld * world = GetWorld();
 	//location.Z = 0;
 	float x = 10;
 	float y = 15;							// Change to read from json
 	FVector goal = FVector(x, y, 0.f);
-	NodeSelector.dynamicPointRrt(map.pos_goal, map.pos_start, map.vel_start, map.vel_goal, map);
+	NodeSelector.dynamicPointRrt(map.pos_goal, map.pos_start, map.vel_start, map.vel_goal, map, world);
 	//UE_LOG(LogTemp,Display,TEXT("%f,%f"),GetActorLocation().X,GetActorLocation().Y)
 	//NodeSelector.differentialRrt(goal, location, PI/2, 0.0);
-	const UWorld * world = GetWorld();
 	
 	for (int i = 1; i < NodeSelector.DynamicNodes.Num(); ++i) {
 		DynamicNode* parent = NodeSelector.DynamicNodes[i]->parent;

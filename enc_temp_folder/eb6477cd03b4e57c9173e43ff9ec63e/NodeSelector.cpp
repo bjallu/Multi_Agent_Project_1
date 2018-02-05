@@ -365,9 +365,7 @@ DynamicNode* NodeSelector::CalculateDynamicPointNode(const DynamicNode& n1, FVec
 
 TArray<DynamicNode*> NodeSelector::DynamicDubinsMove(const DynamicNode& n1, const DynamicNode& n2, const float R1, const float R2, const FVector tp1, const FVector tp2, const FVector p1, const FVector p2, bool rightStart, bool rightGoal, MapFunctions map, const UWorld* world) {
 	TArray<DynamicNode*> next;
-	FVector tempp1 = p1;
-	tempp1.Z = map.z;
-	DrawDebugSphere(world, tempp1, R1, 26, FColor::Blue, true);
+	DrawDebugSphere(world, p1, R1, 26, FColor::Blue, true);
 	DrawDebugSphere(world, p2, R2, 26, FColor::Blue, true);
 	DrawDebugSphere(world, tp1, R1, 26, FColor::Blue, true);
 	DrawDebugSphere(world, tp2, R1, 26, FColor::Blue, true);
